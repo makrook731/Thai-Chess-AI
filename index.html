@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>หมากรุกไทย AI</title>
+
+<style>
+*{
+    box-sizing:border-box;
+}
+
+body{
+    margin:0;
+    background:#f3eee5;
+    color:#3b291d;
+    font-family:Arial,"Noto Sans Thai",sans-serif;
+    text-align:center;
+}
+
+h1{
+    margin:18px 0 4px;
+    font-size:28px;
+}
+
+.subtitle{
+    color:#806d5d;
+    margin-bottom:15px;
+}
+
+#game{
+    width:min(94vw,600px);
+    margin:auto;
+}
+
+/* =========================
+   STATUS
+========================= */
+
+#status{
+    background:#fff;
+    border-radius:14px;
+    padding:13px;
+    margin-bottom:14px;
+    box-shadow:0 3px 12px #0002;
+    font-size:18px;
+    font-weight:bold;
+}
+
+/* =========================
+   BOARD
+========================= */
+
+#board{
+    width:100%;
+    aspect-ratio:1 / 1;
+
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    grid-template-rows:repeat(8,1fr);
+
+    border:6px solid #5b3824;
+    border-radius:8px;
+
+    overflow:hidden;
+
+    box-shadow:
+        0 7px 20px #0003;
+
+    background:#5b3824;
+}
+
+/* ทุกช่องเท่ากัน */
+
+.square{
+    width:100%;
+    height:100%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    position:relative;
+
+    cursor:pointer;
+    user-select:none;
+
+    aspect-ratio:1 / 1;
+}
+
+.light{
+    background:#e8c99b;
+}
+
+.dark{
+    background:#9a653e;
+}
+
+/* =========================
+   PIECES
+========================= */
+
+.piece{
+    width:82%;
+    height:82%;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    font-size:clamp(30px,8vw,55px);
+    line-height:1;
+
+    filter:
+        drop-shadow(1px 2px 1px #0007);
+
+    transition:
+        transform .12s ease;
+}
+
+.square:hover .piece{
+    transform:scale(1.05);
+}
+
+.white{
+    color:#fff;
+    -webkit-text-stroke:1.5px #222;
+}
+
+.black{
+    color:#171717;
+    -webkit-text-stroke:.5px #000;
+}
+
+/* =========================
+   SELECTED
+========================= */
+
+.selected{
+    box-shadow:
+        inset 0 0 0 5px #f5d33d;
+}
+
+/* ช่องเดินได้ */
+
+.possible::after{
+    content:"";
+
+    width:22%;
+    height:22%;
+
+    background:#4d8d4d;
+    border-radius:50%;
+
+    position:absolute;
+
+    opacity:.85;
+}
+
+/* ช่องกิน */
+
+.capture::after{
+    content:"";
+
+    position:absolute;
+
+    width:78%;
+    height:78%;
+
+    border:5px solid #d74646;
+    border-radius:50%;
+
+    opacity:.9;
+}
+
+/* ขุนถูกโจมตี */
+
+.in-check{
+    box-shadow:
+        inset 0 0 0 6px #e33;
+}
+
+/* =========================
+   BUTTON
+========================= */
+
+.controls{
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+
+    margin-top:16px;
+}
+
+button{
+    border:0;
+
+    background:#603b27;
+    color:white;
+
+    padding:12px 20px;
+
+    border-radius:10px;
+
+    font-size:16px;
+
+    cursor:pointer;
+
+    box-shadow:0 3px 7px #0002;
+}
+
+button:active{
+    transform:scale(.97);
+}
+
+button.secondary{
+    background:#80614b;
+}
+
+/* =========================
+   INFO
+========================= */
+
+.info{
+    background:#fff;
+
+    margin-top:12px;
+
+    padding:14px;
+
+    border-radius:13px;
+
+    color:#6d5b4d;
+
+    font-size:14px;
+
+    box-shadow:0 2px 10px #0001;
+}
+
+@media(max-width:400px){
+
+    h1{
+        font-size:24px;
+    }
+
+    #status{
+        font-size:16px;
+    }
+
+    button{
+        padding:10px 15px;
+        font-size:15px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<h1>♟️ หมากรุกไทย AI</h1>
+
+<div class="subtitle">
+    ทดลองเล่นหมากรุกไทย
+</div>
+
+<div id="game">
+
+    <div id="status">
+        ตาของคุณ • ฝ่ายขาว
+    </div>
+
+    <div id="board"></div>
+
+    <div class="controls">
+
+        <button onclick="newGame()">
+            🔄 เริ่มเกมใหม่
+        </button>
+
+        <button
+            class="secondary"
+            onclick="undoMove()">
+            ↩️ ย้อนกลับ
+        </button>
+
+    </div>
+
+    <div class="info">
+
+        คุณเล่นฝ่ายขาว<br>
+        แตะตัวหมาก แล้วแตะช่องที่ต้องการเดิน
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   THAI CHESS / MAKRUK V2
+   =========================================================
+
+   R = เรือ
+   N = ม้า
+   C = โคน
+   M = เม็ด
+   K = ขุน
+   P = เบี้ย
+
+   ฝ่ายขาวอยู่ด้านล่าง
+   ฝ่ายดำอยู่ด้านบน
+
+   ========================================================= */
+
+
+/* =========================
+   ตัวแสดงหมาก
+========================= */
+
+const symbols = {
+
+    R:"♜",
+    N:"♞",
+    C:"♝",
+    M:"◆",
+    K:"♚",
+    P:"●"
+
+};
+
+
+/* =========================
+   ตัวแปรเกม
+========================= */
+
+let board = [];
+
+let turn = "white";
+
+let selected = null;
+
+let possibleMoves = [];
+
+let history = [];
+
+let gameOver = false;
+
+
+/* =========================
+   สร้างเกมใหม่
+========================= */
+
+function newGame(){
+
+    board =
+        Array.from(
+            {length:8},
+            () => Array(8).fill(null)
+        );
+
+    history = [];
+
+    selected = null;
+
+    possibleMoves = [];
+
+    turn = "white";
+
+    gameOver = false;
+
+
+    /*
+       ตำแหน่งหมากรุกไทย
+
+       ดำ
+       แถว 8 : เรือ ม้า โคน เม็ด ขุน โคน ม้า เรือ
+       แถว 7 : เบี้ย เบี้ย เบี้ย ...
+
+       ขาว
+       แถว 2 : เบี้ย เบี้ย เบี้ย ...
+       แถว 1 : เรือ ม้า โคน เม็ด ขุน โคน ม้า เรือ
+
+       หมายเหตุ:
+       เบี้ยหมากรุกไทยเริ่มที่แถว 3
+       และแถว 6
+    */
+
+
+    const backRank =
+        ["R","N","C","M","K","C","N","R"];
+
+
+    /* ฝ่ายดำ */
+
+    for(let c=0;c<8;c++){
+
+        board[0][c] = {
+            type:backRank[c],
+            color:"black"
+        };
+
+        board[1][c] = {
+            type:"P",
+            color:"black"
+        };
+
+    }
+
+
+    /* ฝ่ายขาว */
+
+    for(let c=0;c<8;c++){
+
+        board[6][c] = {
+            type:"P",
+            color:"white"
+        };
+
+        board[7][c] = {
+            type:backRank[c],
+            color:"white"
+        };
+
+    }
+
+
+    updateStatus();
+
+    render();
+
+}
+
+
+/* =========================
+   วาดกระดาน
+========================= */
+
+function render(){
+
+    const boardEl =
+        document.getElementById("board");
+
+    boardEl.innerHTML = "";
+
+
+    for(let r=0;r<8;r++){
+
+        for(let c=0;c<8;c++){
+
+            const square =
+                document.createElement("div");
+
+
+            square.className =
+                "square " +
+                ((r+c)%2===0
+                    ? "light"
+                    : "dark");
+
+
+            /*
+               ตัวที่เลือก
+            */
+
+            if(
+                selected &&
+                selected.r===r &&
+                selected.c===c
+            ){
+
+                square.classList.add(
+                    "selected"
+                );
+
+            }
+
+
+            /*
+               ตาที่เดินได้
+            */
+
+            const move =
+                possibleMoves.find(
+                    m =>
+                    m.r===r &&
+                    m.c===c
+                );
+
+
+            if(move){
+
+                if(board[r][c]){
+
+                    square.classList.add(
+                        "capture"
+                    );
+
+                }else{
+
+                    square.classList.add(
+                        "possible"
+                    );
+
+                }
+
+            }
+
+
+            /*
+               แสดงว่าขุนกำลังโดนรุก
+            */
+
+            const piece =
+                board[r][c];
+
+
+            if(
+                piece &&
+                piece.type==="K" &&
+                isSquareAttacked(
+                    r,
+                    c,
+                    opposite(piece.color)
+                )
+            ){
+
+                square.classList.add(
+                    "in-check"
+                );
+
+            }
+
+
+            /*
+               วาดตัวหมาก
+            */
+
+            if(piece){
+
+                const span =
+                    document.createElement("span");
+
+                span.className =
+                    "piece " +
+                    piece.color;
+
+                span.textContent =
+                    symbols[piece.type];
+
+                square.appendChild(span);
+
+            }
+
+
+            square.onclick =
+                () => clickSquare(r,c);
+
+
+            boardEl.appendChild(square);
+
+        }
+
+    }
+
+}
+
+
+/* =========================
+   คลิกช่อง
+========================= */
+
+function clickSquare(r,c){
+
+    if(gameOver) return;
+
+    const piece =
+        board[r][c];
+
+
+    /*
+       ถ้ายังไม่ได้เลือก
+    */
+
+    if(!selected){
+
+        if(
+            piece &&
+            piece.color===turn
+        ){
+
+            selected = {r,c};
+
+            possibleMoves =
+                getLegalMoves(r,c);
+
+            render();
+
+        }
+
+        return;
+
+    }
+
+
+    /*
+       ถ้าเลือกแล้ว
+       ลองเดิน
+    */
+
+    const valid =
+        possibleMoves.some(
+            m =>
+            m.r===r &&
+            m.c===c
+        );
+
+
+    if(valid){
+
+        saveHistory();
+
+
+        movePiece(
+            selected.r,
+            selected.c,
+            r,
+            c
+        );
+
+
+        selected = null;
+
+        possibleMoves = [];
+
+
+        /*
+           เลื่อนเบี้ย
+        */
+
+        promotePawn(r,c);
+
+
+        /*
+           เปลี่ยนฝ่าย
+        */
+
+        turn =
+            opposite(turn);
+
+
+        render();
+
+
+        checkGameState();
+
+        return;
+
+    }
+
+
+    /*
+       เลือกตัวใหม่
+    */
+
+    if(
+        piece &&
+        piece.color===turn
+    ){
+
+        selected = {r,c};
+
+        possibleMoves =
+            getLegalMoves(r,c);
+
+    }else{
+
+        selected = null;
+
+        possibleMoves = [];
+
+    }
+
+
+    render();
+
+}
+
+
+/* =========================
+   เดินหมาก
+========================= */
+
+function movePiece(
+    r1,c1,
+    r2,c2
+){
+
+    board[r2][c2] =
+        board[r1][c1];
+
+    board[r1][c1] =
+        null;
+
+}
+
+
+/* =========================
+   ตรวจการเดินที่ถูกต้อง
+========================= */
+
+function getLegalMoves(r,c){
+
+    const piece =
+        board[r][c];
+
+    if(!piece) return [];
+
+
+    const pseudo =
+        getPseudoMoves(
+            r,c,piece
+        );
+
+
+    const legal = [];
+
+
+    /*
+       ทดลองเดินทีละตา
+       แล้วดูว่าขุนตัวเองโดนรุกหรือไม่
+    */
+
+    for(const move of pseudo){
+
+        const old =
+            board[move.r][move.c];
+
+
+        board[move.r][move.c] =
+            piece;
+
+        board[r][c] =
+            null;
+
+
+        const king =
+            findKing(piece.color);
+
+
+        const safe =
+            king &&
+            !isSquareAttacked(
+                king.r,
+                king.c,
+                opposite(piece.color)
+            );
+
+
+        board[r][c] =
+            piece;
+
+        board[move.r][move.c] =
+            old;
+
+
+        if(safe){
+
+            legal.push(move);
+
+        }
+
+    }
+
+
+    return legal;
+
+}
+
+
+/* =========================
+   การเดินพื้นฐาน
+========================= */
+
+function getPseudoMoves(r,c,piece){
+
+    switch(piece.type){
+
+        case "R":
+            return rookMoves(
+                r,c,piece
+            );
+
+        case "N":
+            return knightMoves(
+                r,c,piece
+            );
+
+        case "C":
+            return khonMoves(
+                r,c,piece
+            );
+
+        case "M":
+            return metMoves(
+                r,c,piece
+            );
+
+        case "K":
+            return kingMoves(
+                r,c,piece
+            );
+
+        case "P":
+            return pawnMoves(
+                r,c,piece
+            );
+
+    }
+
+    return [];
+
+}
+
+
+/* =========================
+   เรือ
+   เดินแนวตรง
+========================= */
+
+function rookMoves(r,c,p){
+
+    return slidingMoves(
+        r,c,p,
+        [
+            [1,0],
+            [-1,0],
+            [0,1],
+            [0,-1]
+        ]
+    );
+
+}
+
+
+/* =========================
+   ม้า
+========================= */
+
+function knightMoves(r,c,p){
+
+    return jumpMoves(
+        r,c,p,
+        [
+            [2,1],
+            [2,-1],
+            [-2,1],
+            [-2,-1],
+            [1,2],
+            [1,-2],
+            [-1,2],
+            [-1,-2]
+        ]
+    );
+
+}
+
+
+/* =========================
+   ขุน
+========================= */
+
+function kingMoves(r,c,p){
+
+    return jumpMoves(
+        r,c,p,
+        [
+            [1,0],
+            [-1,0],
+            [0,1],
+            [0,-1],
+            [1,1],
+            [1,-1],
+            [-1,1],
+            [-1,-1]
+        ]
+    );
+
+}
+
+
+/* =========================
+   เม็ด
+   เดินทแยง 1 ช่อง
+========================= */
+
+function metMoves(r,c,p){
+
+    return jumpMoves(
+        r,c,p,
+        [
+            [1,1],
+            [1,-1],
+            [-1,1],
+            [-1,-1]
+        ]
+    );
+
+}
+
+
+/* =========================
+   โคน
+
+   หมากรุกไทย:
+   เดินได้ 1 ช่องตรงหน้า
+   และ 1 ช่องทแยง
+========================= */
+
+function khonMoves(r,c,p){
+
+    const dir =
+        p.color==="white"
+            ? -1
+            : 1;
+
+
+    return jumpMoves(
+        r,c,p,
+        [
+            [dir,0],
+            [dir,1],
+            [dir,-1]
+        ]
+    );
+
+}
+
+
+/* =========================
+   เบี้ย
+
+   เดินตรงหน้า 1 ช่อง
+   กินทแยง 1 ช่อง
+
+   หมากรุกไทยไม่มีการเดิน 2 ช่อง
+========================= */
+
+function pawnMoves(r,c,p){
+
+    const dir =
+        p.color==="white"
+            ? -1
+            : 1;
+
+
+    const moves = [];
+
+
+    /*
+       เดินหน้า
+    */
+
+    const nr =
+        r + dir;
+
+
+    if(
+        inside(nr,c) &&
+        !board[nr][c]
+    ){
+
+        moves.push({
+            r:nr,
+            c:c
+        });
+
+    }
+
+
+    /*
+       กินทแยง
+    */
+
+    for(
+        const dc of [-1,1]
+    ){
+
+        const nc =
+            c + dc;
+
+
+        if(
+            !inside(nr,nc)
+        ) continue;
+
+
+        if(
+            board[nr][nc] &&
+            board[nr][nc].color!==p.color
+        ){
+
+            moves.push({
+                r:nr,
+                c:nc
+            });
+
+        }
+
+    }
+
+
+    return moves;
+
+}
+
+
+/* =========================
+   เดินเป็นเส้น
+========================= */
+
+function slidingMoves(
+    r,c,p,dirs
+){
+
+    const moves=[];
+
+
+    for(
+        const [dr,dc]
+        of dirs
+    ){
+
+        let nr =
+            r + dr;
+
+        let nc =
+            c + dc;
+
+
+        while(
+            inside(nr,nc)
+        ){
+
+            if(
+                !board[nr][nc]
+            ){
+
+                moves.push({
+                    r:nr,
+                    c:nc
+                });
+
+            }else{
+
+                if(
+                    board[nr][nc].color!==p.color
+                ){
+
+                    moves.push({
+                        r:nr,
+                        c:nc
+                    });
+
+                }
+
+                break;
+
+            }
+
+
+            nr += dr;
+            nc += dc;
+
+        }
+
+    }
+
+
+    return moves;
+
+}
+
+
+/* =========================
+   เดินแบบกระโดด
+========================= */
+
+function jumpMoves(
+    r,c,p,dirs
+){
+
+    const moves=[];
+
+
+    for(
+        const [dr,dc]
+        of dirs
+    ){
+
+        const nr =
+            r + dr;
+
+        const nc =
+            c + dc;
+
+
+        if(
+            !inside(nr,nc)
+        ) continue;
+
+
+        if(
+            !board[nr][nc] ||
+            board[nr][nc].color!==p.color
+        ){
+
+            moves.push({
+                r:nr,
+                c:nc
+            });
+
+        }
+
+    }
+
+
+    return moves;
+
+}
+
+
+/* =========================
+   ตรวจในกระดาน
+========================= */
+
+function inside(r,c){
+
+    return (
+        r>=0 &&
+        r<8 &&
+        c>=0 &&
+        c<8
+    );
+
+}
+
+
+/* =========================
+   หาสีตรงข้าม
+========================= */
+
+function opposite(color){
+
+    return color==="white"
+        ? "black"
+        : "white";
+
+}
+
+
+/* =========================
+   หาขุน
+========================= */
+
+function findKing(color){
+
+    for(let r=0;r<8;r++){
+
+        for(let c=0;c<8;c++){
+
+            const p =
+                board[r][c];
+
+            if(
+                p &&
+                p.color===color &&
+                p.type==="K"
+            ){
+
+                return {r,c};
+
+            }
+
+        }
+
+    }
+
+    return null;
+
+}
+
+
+/* =========================
+   ตรวจว่าช่องถูกโจมตีหรือไม่
+========================= */
+
+function isSquareAttacked(
+    r,c,
+    byColor
+){
+
+    for(let rr=0;rr<8;rr++){
+
+        for(let cc=0;cc<8;cc++){
+
+            const p =
+                board[rr][cc];
+
+
+            if(
+                !p ||
+                p.color!==byColor
+            ) continue;
+
+
+            /*
+               เบี้ย
+            */
+
+            if(p.type==="P"){
+
+                const dir =
+                    p.color==="white"
+                        ? -1
+                        : 1;
+
+
+                if(
+                    rr+dir===r &&
+                    Math.abs(cc-c)===1
+                ){
+
+                    return true;
+
+                }
+
+                continue;
+
+            }
+
+
+            /*
+               หมากอื่น
+            */
+
+            const attacks =
+                getPseudoMoves(
+                    rr,cc,p
+                );
+
+
+            if(
+                attacks.some(
+                    m =>
+                    m.r===r &&
+                    m.c===c
+                )
+            ){
+
+                return true;
+
+            }
+
+        }
+
+    }
+
+
+    return false;
+
+}
+
+
+/* =========================
+   เลื่อนเบี้ยเป็นเม็ด
+========================= */
+
+function promotePawn(r,c){
+
+    const p =
+        board[r][c];
+
+    if(
+        !p ||
+        p.type!=="P"
+    ) return;
+
+
+    /*
+       ฝ่ายขาวถึงแถว 3
+       ฝ่ายดำถึงแถว 6
+
+       ในระบบ index:
+       ขาว = row 2
+       ดำ = row 5
+    */
+
+    if(
+        p.color==="white" &&
+        r===2
+    ){
+
+        p.type="M";
+
+    }
+
+
+    if(
+        p.color==="black" &&
+        r===5
+    ){
+
+        p.type="M";
+
+    }
+
+}
+
+
+/* =========================
+   ตรวจสถานะเกม
+========================= */
+
+function checkGameState(){
+
+    const king =
+        findKing(turn);
+
+
+    if(!king){
+
+        gameOver=true;
+
+        statusEl.textContent =
+            "จบเกม";
+
+        return;
+
+    }
+
+
+    const inCheck =
+        isSquareAttacked(
+            king.r,
+            king.c,
+            opposite(turn)
+        );
+
+
+    let hasMove=false;
+
+
+    for(let r=0;r<8;r++){
+
+        for(let c=0;c<8;c++){
+
+            const p =
+                board[r][c];
+
+
+            if(
+                p &&
+                p.color===turn
+            ){
+
+                if(
+                    getLegalMoves(
+                        r,c
+                    ).length>0
+                ){
+
+                    hasMove=true;
+
+                    break;
+
+                }
+
+            }
+
+        }
+
+        if(hasMove) break;
+
+    }
+
+
+    if(!hasMove){
+
+        gameOver=true;
+
+
+        if(inCheck){
+
+            statusEl.textContent =
+                turn==="white"
+                    ? "รุกฆาต! ฝ่ายดำชนะ"
+                    : "รุกฆาต! ฝ่ายขาวชนะ";
+
+        }else{
+
+            statusEl.textContent =
+                "ไม่มีตาเดิน";
+
+        }
+
+
+        return;
+
+    }
+
+
+    if(inCheck){
+
+        statusEl.textContent =
+            turn==="white"
+                ? "⚠️ ขุนฝ่ายขาวถูกรุก"
+                : "⚠️ ขุนฝ่ายดำถูกรุก";
+
+    }else{
+
+        updateStatus();
+
+    }
+
+
+    render();
+
+}
+
+
+/* =========================
+   แสดงสถานะ
+========================= */
+
+function updateStatus(){
+
+    statusEl.textContent =
+        turn==="white"
+            ? "ตาของคุณ • ฝ่ายขาว"
+            : "ตาของฝ่ายดำ";
+
+}
+
+
+/* =========================
+   บันทึกประวัติ
+========================= */
+
+function saveHistory(){
+
+    history.push(
+        JSON.stringify(board)
+    );
+
+}
+
+
+/* =========================
+   ย้อนกลับ
+========================= */
+
+function undoMove(){
+
+    if(
+        history.length===0
+    ) return;
+
+
+    const previous =
+        history.pop();
+
+
+    board =
+        JSON.parse(previous);
+
+
+    turn =
+        opposite(turn);
+
+
+    selected=null;
+
+    possibleMoves=[];
+
+    gameOver=false;
+
+
+    updateStatus();
+
+    render();
+
+}
+
+
+/* =========================
+   เริ่มเกม
+========================= */
+
+newGame();
+
+</script>
+
+</body>
+</html>
