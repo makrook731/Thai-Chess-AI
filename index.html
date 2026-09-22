@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thai Chess AI</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+    margin:0;
+    background:#f3eee5;
+    font-family:Arial,"Noto Sans Thai",sans-serif;
+    color:#33251b;
+    text-align:center;
+}
+
+h1{
+    margin:18px 0 5px;
+    font-size:28px;
+}
+
+.subtitle{
+    color:#766657;
+    margin-bottom:15px;
+}
+
+#game{
+    width:min(94vw,600px);
+    margin:auto;
+}
+
+#status{
+    background:#fff;
+    border-radius:12px;
+    padding:12px;
+    margin-bottom:12px;
+    box-shadow:0 2px 8px #0001;
+    font-weight:bold;
+}
+
+#board{
+    width:100%;
+    aspect-ratio:1;
+    display:grid;
+    grid-template-columns:repeat(8,1fr);
+    border:5px solid #5c3925;
+    border-radius:5px;
+    overflow:hidden;
+    box-shadow:0 5px 20px #0003;
+}
+
+.square{
+    position:relative;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:clamp(28px,8vw,52px);
+    user-select:none;
+    cursor:pointer;
+}
+
+.light{background:#e8c99b}
+.dark{background:#9b673f}
+
+.square.selected{
+    box-shadow:inset 0 0 0 5px #f5d742;
+}
+
+.square.possible{
+    box-shadow:inset 0 0 0 4px #5da45d;
+}
+
+.square.capture{
+    box-shadow:inset 0 0 0 5px #d84a4a;
+}
+
+.piece{
+    line-height:1;
+    filter:drop-shadow(1px 2px 1px #0005);
+}
+
+.white{
+    color:#fff;
+    -webkit-text-stroke:1.5px #222;
+}
+
+.black{
+    color:#222;
+}
+
+button{
+    border:0;
+    background:#5c3925;
+    color:white;
+    padding:12px 20px;
+    margin:14px 5px;
+    border-radius:9px;
+    font-size:16px;
+    cursor:pointer;
+}
+
+button:active{
+    transform:scale(.97);
+}
+
+.info{
+    background:#fff;
+    margin-top:10px;
+    padding:12px;
+    border-radius:10px;
+    color:#66584d;
+    font-size:14px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>♟️ หมากรุกไทย AI</h1>
+<div class="subtitle">ทดลองเล่นกับ AI</div>
+
+<div id="game">
+
+    <div id="status">ตาของคุณ</div>
+
+    <div id="board"></div>
+
+    <button onclick="newGame()">🔄 เริ่มเกมใหม่</button>
+
+    <div class="info">
+        คุณเล่นฝ่ายขาว • AI เล่นฝ่ายดำ<br>
+        แตะตัวหมาก แล้วแตะช่องที่ต้องการเดิน
+    </div>
+
+</div>
+
+<script>
+
+/* =========================================================
+   THAI CHESS AI - V1
+   Prototype สำหรับ GitHub Pages
+   ========================================================= */
+
+const boardEl = document.getElementById("board");
+const statusEl = document.getElementById("status");
+
+/*
+    ตัวหมาก
+
+    R = เรือ
+    N = ม้า
+    K = ขุน
+    M = เม็ด
+    C = โคน
+    P = เบี้ย
+*/
+
+const symbols = {
+    white:{
+        R:"♜",
+        N:"♞",
+        K:"♚",
+        M:"◆",
+        C:"♟",
+        P:"●"
+    },
+    black:{
+        R:"♜",
+        N:"♞",
+        K:"♚",
+        M:"◆",
+        C:"♟",
+        P:"●"
+    }
+};
+
+let board = [];
+let selected = null;
+let possibleMoves = [];
+let playerTurn = true;
+
+
+/* =========================
+   สร้างกระดานเริ่มต้น
+   ========================= */
+
+function newGame(){
+
+    board = Array.from({length:8},()=>Array(8).fill(null));
+
+    /*
+      ฝ่ายดำอยู่ด้านบน
+      ฝ่ายขาวอยู่ด้านล่าง
+    */
+
+    const back = ["R","N","C","M","K","C","N","R"];
+
+    for(let c=0;c<8;c++){
+        board[0][c] = {type:back[c],color:"black"};
+        board[1][c] = {type:"P",color:"black"};
+
+        board[6][c] = {type:"P",color:"white"};
+        board[7][c] = {type:back[c],color:"white"};
+    }
+
+    selected = null;
+    possibleMoves = [];
+    playerTurn = true;
+
+    statusEl.textContent = "ตาของคุณ";
+    render();
+}
+
+
+/* =========================
+   แสดงกระดาน
+   ========================= */
+
+function render(){
+
+    boardEl.innerHTML = "";
+
+    for(let r=0;r<8;r++){
+
+        for(let c=0;c<8;c++){
+
+            const sq = document.createElement("div");
+
+            sq.className =
+                "square " +
+                ((r+c)%2===0 ? "light":"dark");
+
+            if(selected &&
+               selected.r===r &&
+               selected.c===c){
+                sq.classList.add("selected");
+            }
+
+            const move = possibleMoves.find(
+                m=>m.r===r && m.c===c
+            );
+
+            if(move){
+
+                if(board[r][c]){
+                    sq.classList.add("capture");
+                }else{
+                    sq.classList.add("possible");
+                }
+            }
+
+            if(board[r][c]){
+
+                const p = board[r][c];
+
+                const span = document.createElement("span");
+
+                span.className =
+                    "piece " + p.color;
+
+                span.textContent =
+                    symbols[p.color][p.type];
+
+                sq.appendChild(span);
+            }
+
+            sq.onclick = ()=>clickSquare(r,c);
+
+            boardEl.appendChild(sq);
+        }
+    }
+}
+
+
+/* =========================
+   คลิกกระดาน
+   ========================= */
+
+function clickSquare(r,c){
+
+    if(!playerTurn) return;
+
+    const piece = board[r][c];
+
+    /* เลือกตัวหมาก */
+
+    if(!selected){
+
+        if(piece && piece.color==="white"){
+
+            selected = {r,c};
+
+            possibleMoves =
+                getLegalMoves(r,c);
+
+            render();
+        }
+
+        return;
+    }
+
+
+    /* เดินหมาก */
+
+    const valid = possibleMoves.some(
+        m=>m.r===r && m.c===c
+    );
+
+    if(valid){
+
+        movePiece(
+            selected.r,
+            selected.c,
+            r,
+            c
+        );
+
+        selected = null;
+        possibleMoves = [];
+
+        playerTurn = false;
+
+        render();
+
+        statusEl.textContent =
+            "AI กำลังคิด...";
+
+        setTimeout(aiMove,500);
+
+        return;
+    }
+
+
+    /* เลือกหมากตัวอื่น */
+
+    if(piece && piece.color==="white"){
+
+        selected = {r,c};
+
+        possibleMoves =
+            getLegalMoves(r,c);
+
+        render();
+
+    }else{
+
+        selected = null;
+        possibleMoves = [];
+
+        render();
+    }
+}
+
+
+/* =========================
+   เดินหมาก
+   ========================= */
+
+function movePiece(r1,c1,r2,c2){
+
+    board[r2][c2] =
+        board[r1][c1];
+
+    board[r1][c1] = null;
+}
+
+
+/* =========================
+   หาการเดินของหมาก
+   ========================= */
+
+function getLegalMoves(r,c){
+
+    const p = board[r][c];
+
+    if(!p) return [];
+
+    let moves = [];
+
+    if(p.type==="R"){
+        moves = rookMoves(r,c,p);
+    }
+
+    if(p.type==="N"){
+        moves = knightMoves(r,c,p);
+    }
+
+    if(p.type==="K"){
+        moves = kingMoves(r,c,p);
+    }
+
+    if(p.type==="M"){
+        moves = metMoves(r,c,p);
+    }
+
+    if(p.type==="C"){
+        moves = khonMoves(r,c,p);
+    }
+
+    if(p.type==="P"){
+        moves = pawnMoves(r,c,p);
+    }
+
+    return moves;
+}
+
+
+/* =========================
+   เรือ
+   ========================= */
+
+function rookMoves(r,c,p){
+
+    const dirs=[
+        [1,0],
+        [-1,0],
+        [0,1],
+        [0,-1]
+    ];
+
+    return slidingMoves(r,c,p,dirs);
+}
+
+
+/* =========================
+   ม้า
+   ========================= */
+
+function knightMoves(r,c,p){
+
+    const dirs=[
+        [2,1],
+        [2,-1],
+        [-2,1],
+        [-2,-1],
+        [1,2],
+        [1,-2],
+        [-1,2],
+        [-1,-2]
+    ];
+
+    return jumpMoves(r,c,p,dirs);
+}
+
+
+/* =========================
+   ขุน
+   ========================= */
+
+function kingMoves(r,c,p){
+
+    const dirs=[
+        [1,0],
+        [-1,0],
+        [0,1],
+        [0,-1],
+        [1,1],
+        [1,-1],
+        [-1,1],
+        [-1,-1]
+    ];
+
+    return jumpMoves(r,c,p,dirs);
+}
+
+
+/* =========================
+   เม็ด
+   ========================= */
+
+function metMoves(r,c,p){
+
+    const dirs=[
+        [1,1],
+        [1,-1],
+        [-1,1],
+        [-1,-1]
+    ];
+
+    return jumpMoves(r,c,p,dirs);
+}
+
+
+/* =========================
+   โคน
+   ========================= */
+
+function khonMoves(r,c,p){
+
+    const dir =
+        p.color==="white" ? -1 : 1;
+
+    const moves=[];
+
+    const positions=[
+        [dir,0],
+        [dir,1],
+        [dir,-1]
+    ];
+
+    for(const [dr,dc] of positions){
+
+        const nr=r+dr;
+        const nc=c+dc;
+
+        if(!inside(nr,nc)) continue;
+
+        if(!board[nr][nc] ||
+           board[nr][nc].color!==p.color){
+
+            moves.push({r:nr,c:nc});
+        }
+    }
+
+    return moves;
+}
+
+
+/* =========================
+   เบี้ย
+   ========================= */
+
+function pawnMoves(r,c,p){
+
+    const dir =
+        p.color==="white" ? -1 : 1;
+
+    const moves=[];
+
+    const nr=r+dir;
+
+    if(inside(nr,c) && !board[nr][c]){
+
+        moves.push({
+            r:nr,
+            c:c
+        });
+    }
+
+    for(const dc of [-1,1]){
+
+        const nc=c+dc;
+
+        if(!inside(nr,nc)) continue;
+
+        if(board[nr][nc] &&
+           board[nr][nc].color!==p.color){
+
+            moves.push({
+                r:nr,
+                c:nc
+            });
+        }
+    }
+
+    return moves;
+}
+
+
+/* =========================
+   เดินแบบเส้น
+   ========================= */
+
+function slidingMoves(r,c,p,dirs){
+
+    const moves=[];
+
+    for(const [dr,dc] of dirs){
+
+        let nr=r+dr;
+        let nc=c+dc;
+
+        while(inside(nr,nc)){
+
+            if(!board[nr][nc]){
+
+                moves.push({r:nr,c:nc});
+
+            }else{
+
+                if(board[nr][nc].color!==p.color){
+
+                    moves.push({r:nr,c:nc});
+                }
+
+                break;
+            }
+
+            nr+=dr;
+            nc+=dc;
+        }
+    }
+
+    return moves;
+}
+
+
+/* =========================
+   เดินแบบกระโดด
+   ========================= */
+
+function jumpMoves(r,c,p,dirs){
+
+    const moves=[];
+
+    for(const [dr,dc] of dirs){
+
+        const nr=r+dr;
+        const nc=c+dc;
+
+        if(!inside(nr,nc)) continue;
+
+        if(!board[nr][nc] ||
+           board[nr][nc].color!==p.color){
+
+            moves.push({r:nr,c:nc});
+        }
+    }
+
+    return moves;
+}
+
+
+/* =========================
+   อยู่ในกระดานหรือไม่
+   ========================= */
+
+function inside(r,c){
+
+    return r>=0 &&
+           r<8 &&
+           c>=0 &&
+           c<8;
+}
+
+
+/* =========================================================
+   AI
+   ========================================================= */
+
+function aiMove(){
+
+    let allMoves=[];
+
+    for(let r=0;r<8;r++){
+
+        for(let c=0;c<8;c++){
+
+            const p=board[r][c];
+
+            if(!p || p.color!=="black") continue;
+
+            const moves=getLegalMoves(r,c);
+
+            for(const m of moves){
+
+                allMoves.push({
+                    from:{r,c},
+                    to:m,
+                    capture:!!board[m.r][m.c]
+                });
+            }
+        }
+    }
+
+
+    if(allMoves.length===0){
+
+        statusEl.textContent =
+            "AI ไม่มีตาเดิน";
+
+        playerTurn=true;
+
+        return;
+    }
+
+
+    /*
+      AI V1:
+      ถ้ากินได้ ให้เลือกการกินก่อน
+      ถ้าไม่มีการกิน ให้เลือกแบบสุ่ม
+    */
+
+    const captures =
+        allMoves.filter(m=>m.capture);
+
+    let move;
+
+    if(captures.length){
+
+        move =
+            captures[
+                Math.floor(
+                    Math.random()*captures.length
+                )
+            ];
+
+    }else{
+
+        move =
+            allMoves[
+                Math.floor(
+                    Math.random()*allMoves.length
+                )
+            ];
+    }
+
+
+    movePiece(
+        move.from.r,
+        move.from.c,
+        move.to.r,
+        move.to.c
+    );
+
+    playerTurn=true;
+
+    statusEl.textContent =
+        "ตาของคุณ";
+
+    render();
+}
+
+
+/* =========================
+   เริ่มเกม
+   ========================= */
+
+newGame();
+
+</script>
+
+</body>
+</html>
