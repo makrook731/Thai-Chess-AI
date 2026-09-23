@@ -3,82 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>หมากรุกไทย ออนไลน์ (MVP)</title>
+    <title>หมากรุกไทย ออนไลน์</title>
     <style>
         body {
             font-family: 'Sarabun', Tahoma, sans-serif;
-            background-color: #f4f4f9;
+            background-color: #f7f3ed;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-        }
-        h1 {
             color: #333;
+        }
+        .header {
+            text-align: center;
             margin-bottom: 10px;
         }
-        #status {
-            font-size: 18px;
+        .header h1 {
+            font-size: 24px;
+            margin: 5px 0;
+            color: #4a3319;
+        }
+        .status-box {
+            background: #fff;
+            padding: 8px 20px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            font-size: 15px;
+            font-weight: bold;
             color: #555;
             margin-bottom: 15px;
-            font-weight: bold;
+            border: 1px solid #e0d5c1;
         }
         #board {
             display: grid;
-            grid-template-columns: repeat(8, 60px);
-            grid-template-rows: repeat(8, 60px);
-            border: 4px solid #5a3d28;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            grid-template-columns: repeat(8, 52px);
+            grid-template-rows: repeat(8, 52px);
+            border: 4px solid #6b4423;
+            border-radius: 4px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background-color: #6b4423;
         }
         .cell {
-            width: 60px;
-            height: 60px;
+            width: 52px;
+            height: 52px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 28px;
-            font-weight: bold;
             cursor: pointer;
             user-select: none;
+            position: relative;
         }
-        /* สีกระดานลายตารางหมากรุก */
-        .light { background-color: #deb887; }
-        .dark { background-color: #8b4513; color: #fff; }
-        .selected { background-color: #ffeb3b !important; color: #000; }
-        
-        .piece-red { color: #d32f2f; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
-        .piece-blue { color: #1976d2; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        /* ลายตารางไม้คลาสสิกสไตล์ PlayOK */
+        .light { background-color: #f0d9b5; }
+        .dark { background-color: #b58863; }
+        .selected { background-color: #bbc785 !important; }
+
+        /* สไตล์ตัวหมาก (จำลองรูปทรงไทยคลาสสิกผ่าน SVG/Icon) */
+        .piece {
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 14px;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+            transition: transform 0.1s;
+        }
+        .piece:active {
+            transform: scale(0.95);
+        }
+        /* ฝั่งขาว / แดง (ผู้เล่น) */
+        .piece-white {
+            background: #fff;
+            color: #222;
+            border: 2px solid #333;
+        }
+        /* ฝั่งดำ (AI) */
+        .piece-black {
+            background: #2c2c2c;
+            color: #fff;
+            border: 2px solid #000;
+        }
+
+        .btn-container {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            background-color: #8b5a2b;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: background 0.2s;
+        }
+        .btn:hover {
+            background-color: #6b4423;
+        }
     </style>
 </head>
 <body>
 
-    <h1>หมากรุกไทย ออนไลน์</h1>
-    <div id="status">ตาเดิน: ผู้เล่นสีแดง</div>
+    <div class="header">
+        <h1>♞ หมากรุกไทย ออนไลน์</h1>
+    </div>
+    
+    <div id="status" class="status-box">ตาของคุณ • ฝ่ายเดินก่อน</div>
+    
     <div id="board"></div>
 
+    <div class="btn-container">
+        <button class="btn" onclick="resetGame()">เริ่มเกมใหม่</button>
+    </div>
+
     <script>
-        // แทนค่าตัวหมาก (ร = เรือ, ม = ม้า, โ = โคน, เม = เม็ด, ข = ขุน, บ = เบี้ย)
-        // ตัวพิมพ์ใหญ่ = สีแดง (ด้านล่าง), ตัวพิมพ์เล็ก = สีน้ำเงิน/ดำ (ด้านบน - AI)
+        // ตำแหน่งตั้งต้นมาตรฐานหมากรุกไทย
+        // w = ตัวหมากขาว (ผู้เล่น), b = ตัวหมากดำ (AI)
+        // ร=เรือ, ม=ม้า, โ=โคน, เม=เม็ด, ข=ขุน, บ=เบี้ย
         const initialBoard = [
-            ["ร", "ม", "โ", "เม", "ข", "โ", "ม", "ร"],
+            ["b-ร", "b-ม", "b-โ", "b-เม", "b-ข", "b-โ", "b-ม", "b-ร"],
             ["", "", "", "", "", "", "", ""],
-            ["บ", "บ", "บ", "บ", "บ", "บ", "บ", "บ"],
+            ["b-บ", "b-บ", "b-บ", "b-บ", "b-บ", "b-บ", "b-บ", "b-บ"],
             ["", "", "", "", "", "", "", ""],
             ["", "", "", "", "", "", "", ""],
-            ["-บ", "-บ", "-บ", "-บ", "-บ", "-บ", "-บ", "-บ"],
+            ["w-บ", "w-บ", "w-บ", "w-บ", "w-บ", "w-บ", "w-บ", "w-บ"],
             ["", "", "", "", "", "", "", ""],
-            ["-ร", "-ม", "-โ", "-เม", "-ข", "-โ", "-ม", "-ร"]
+            ["w-ร", "w-ม", "w-โ", "w-เม", "w-ข", "w-โ", "w-ม", "w-ร"]
         ];
 
         let boardState = JSON.parse(JSON.stringify(initialBoard));
         let selectedCell = null;
-        let turn = 'red'; // red เดินก่อน
+        let turn = 'w'; // w เดินก่อน
 
-        const pieceSymbols = {
-            "ร": "เรือ", "ม": "ม้า", "โ": "โคน", "เม": "เม็ด", "ข": "ขุน", "บ": "เบี้ย",
-            "-ร": "เรือ", "-ม": "ม้า", "-โ": "โคน", "-เม": "เม็ด", "-ข": "ขุน", "-บ": "เบี้ย"
+        // ตัวอักษรย่อแสดงบนเหรียญหมากสไตล์ PlayOK
+        const pieceLabels = {
+            "ร": "เรือ", "ม": "ม้า", "โ": "โคน", "เม": "เม็ด", "ข": "ขุน", "บ": "เบี้ย"
         };
 
         function renderBoard() {
@@ -89,25 +157,20 @@
                 for (let c = 0; c < 8; c++) {
                     const cell = document.createElement("div");
                     cell.classList.add("cell");
-                    // สลับสีช่องตาราง
-                    if ((r + c) % 2 === 0) {
-                        cell.classList.add("light");
-                    } else {
-                        cell.classList.add("dark");
-                    }
+                    cell.classList.add((r + c) % 2 === 0 ? "light" : "dark");
 
                     if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
                         cell.classList.add("selected");
                     }
 
-                    const piece = boardState[r][c];
-                    if (piece) {
-                        cell.innerText = pieceSymbols[piece];
-                        if (piece.startsWith("-")) {
-                            cell.classList.add("piece-blue");
-                        } else {
-                            cell.classList.add("piece-red");
-                        }
+                    const val = boardState[r][c];
+                    if (val) {
+                        const [color, type] = val.split("-");
+                        const pieceDiv = document.createElement("div");
+                        pieceDiv.classList.add("piece");
+                        pieceDiv.classList.add(color === 'w' ? "piece-white" : "piece-black");
+                        pieceDiv.innerText = pieceLabels[type];
+                        cell.appendChild(pieceDiv);
                     }
 
                     cell.addEventListener("click", () => handleCellClick(r, c));
@@ -117,11 +180,11 @@
         }
 
         function handleCellClick(r, c) {
-            const piece = boardState[r][c];
+            const val = boardState[r][c];
 
             if (selectedCell === null) {
-                // เลือกตัวหมาก (เบื้องต้นให้เลือกเฉพาะฝั่งแดงเล่นก่อน)
-                if (piece && !piece.startsWith("-") && turn === 'red') {
+                // เลือกหมากของฝั่งผู้เล่น (w)
+                if (val && val.startsWith("w") && turn === 'w') {
                     selectedCell = { r, c };
                     renderBoard();
                 }
@@ -133,55 +196,60 @@
                     return;
                 }
 
-                // ขยับตัวหมากไปยังช่องปลายทาง (แบบย้ายง่ายๆ ก่อนในสเต็ปนี้)
+                // เดินหมาก (เบื้องต้นย้ายตำแหน่งไปช่องปลายทาง)
                 boardState[r][c] = boardState[selectedCell.r][selectedCell.c];
                 boardState[selectedCell.r][selectedCell.c] = "";
                 selectedCell = null;
                 renderBoard();
 
-                // เปลี่ยนตาเดิน และจำลองให้ AI (ฝ่ายน้ำเงิน) เดินสุ่มแบบง่ายๆ หลังจากผู้เล่นเดิน
-                turn = 'blue';
-                document.getElementById("status").innerText = "ตาเดิน: AI (กำลังคิด...)";
+                // เปลี่ยนตาให้ AI (b)
+                turn = 'b';
+                document.getElementById("status").innerText = "AI กำลังคิด...";
                 
-                setTimeout(makeRandomAIMove, 600);
+                setTimeout(makeAIMove, 600);
             }
         }
 
-        // ฟังก์ชันจำลอง AI เดินสุ่ม (สำหรับทดสอบโครงสร้างพื้นฐาน)
-        function makeRandomAIMove() {
-            let bluePieces = [];
+        function makeAIMove() {
+            let blackPieces = [];
             for (let r = 0; r < 8; r++) {
                 for (let c = 0; c < 8; c++) {
-                    if (boardState[r][c].startsWith("-")) {
-                        bluePieces.push({ r, c });
+                    if (boardState[r][c].startsWith("b")) {
+                        blackPieces.push({ r, c });
                     }
                 }
             }
 
-            if (bluePieces.length > 0) {
-                // สุ่มเลือกตัวหมากของ AI 1 ตัว
-                let randomPiece = bluePieces[Math.floor(Math.random() * bluePieces.length)];
-                // สุ่มขยับเดินไปรอบๆ ช่องใกล้เคียง (ตัวอย่างจำลองแบบง่าย)
+            if (blackPieces.length > 0) {
+                // สุ่มเดินตัวหมาก AI ง่ายๆ
+                let p = blackPieces[Math.floor(Math.random() * blackPieces.length)];
                 let moves = [
-                    {r: randomPiece.r + 1, c: randomPiece.c},
-                    {r: randomPiece.r, c: randomPiece.c + 1},
-                    {r: randomPiece.r, c: randomPiece.c - 1}
+                    {r: p.r + 1, c: p.c},
+                    {r: p.r, c: p.c + 1},
+                    {r: p.r, c: p.c - 1}
                 ];
-                let validMoves = moves.filter(m => m.r >= 0 && m.r < 8 && m.c >= 0 && m.c < 8 && !boardState[m.r][m.c].startsWith("-"));
+                let valid = moves.filter(m => m.r >= 0 && m.r < 8 && m.c >= 0 && m.c < 8 && !boardState[m.r][m.c].startsWith("b"));
                 
-                if (validMoves.length > 0) {
-                    let target = validMoves[Math.floor(Math.random() * validMoves.length)];
-                    boardState[target.r][target.c] = boardState[randomPiece.r][randomPiece.c];
-                    boardState[randomPiece.r][randomPiece.c] = "";
+                if (valid.length > 0) {
+                    let target = valid[Math.floor(Math.random() * valid.length)];
+                    boardState[target.r][target.c] = boardState[p.r][p.c];
+                    boardState[p.r][p.c] = "";
                 }
             }
 
-            turn = 'red';
-            document.getElementById("status").innerText = "ตาเดิน: ผู้เล่นสีแดง";
+            turn = 'w';
+            document.getElementById("status").innerText = "ตาของคุณ • ฝ่ายเดินก่อน";
             renderBoard();
         }
 
-        // เริ่มต้นแสดงผลกระดานครั้งแรก
+        function resetGame() {
+            boardState = JSON.parse(JSON.stringify(initialBoard));
+            selectedCell = null;
+            turn = 'w';
+            document.getElementById("status").innerText = "ตาของคุณ • ฝ่ายเดินก่อน";
+            renderBoard();
+        }
+
         renderBoard();
     </script>
 
