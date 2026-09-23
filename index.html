@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หมากรุกไทย ออนไลน์ (MVP)</title>
+    <style>
+        body {
+            font-family: 'Sarabun', Tahoma, sans-serif;
+            background-color: #f4f4f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        #status {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 4px solid #5a3d28;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .cell {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+        }
+        /* สีกระดานลายตารางหมากรุก */
+        .light { background-color: #deb887; }
+        .dark { background-color: #8b4513; color: #fff; }
+        .selected { background-color: #ffeb3b !important; color: #000; }
+        
+        .piece-red { color: #d32f2f; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+        .piece-blue { color: #1976d2; text-shadow: 1px 1px 2px rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body>
+
+    <h1>หมากรุกไทย ออนไลน์</h1>
+    <div id="status">ตาเดิน: ผู้เล่นสีแดง</div>
+    <div id="board"></div>
+
+    <script>
+        // แทนค่าตัวหมาก (ร = เรือ, ม = ม้า, โ = โคน, เม = เม็ด, ข = ขุน, บ = เบี้ย)
+        // ตัวพิมพ์ใหญ่ = สีแดง (ด้านล่าง), ตัวพิมพ์เล็ก = สีน้ำเงิน/ดำ (ด้านบน - AI)
+        const initialBoard = [
+            ["ร", "ม", "โ", "เม", "ข", "โ", "ม", "ร"],
+            ["", "", "", "", "", "", "", ""],
+            ["บ", "บ", "บ", "บ", "บ", "บ", "บ", "บ"],
+            ["", "", "", "", "", "", "", ""],
+            ["", "", "", "", "", "", "", ""],
+            ["-บ", "-บ", "-บ", "-บ", "-บ", "-บ", "-บ", "-บ"],
+            ["", "", "", "", "", "", "", ""],
+            ["-ร", "-ม", "-โ", "-เม", "-ข", "-โ", "-ม", "-ร"]
+        ];
+
+        let boardState = JSON.parse(JSON.stringify(initialBoard));
+        let selectedCell = null;
+        let turn = 'red'; // red เดินก่อน
+
+        const pieceSymbols = {
+            "ร": "เรือ", "ม": "ม้า", "โ": "โคน", "เม": "เม็ด", "ข": "ขุน", "บ": "เบี้ย",
+            "-ร": "เรือ", "-ม": "ม้า", "-โ": "โคน", "-เม": "เม็ด", "-ข": "ขุน", "-บ": "เบี้ย"
+        };
+
+        function renderBoard() {
+            const boardElement = document.getElementById("board");
+            boardElement.innerHTML = "";
+
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    const cell = document.createElement("div");
+                    cell.classList.add("cell");
+                    // สลับสีช่องตาราง
+                    if ((r + c) % 2 === 0) {
+                        cell.classList.add("light");
+                    } else {
+                        cell.classList.add("dark");
+                    }
+
+                    if (selectedCell && selectedCell.r === r && selectedCell.c === c) {
+                        cell.classList.add("selected");
+                    }
+
+                    const piece = boardState[r][c];
+                    if (piece) {
+                        cell.innerText = pieceSymbols[piece];
+                        if (piece.startsWith("-")) {
+                            cell.classList.add("piece-blue");
+                        } else {
+                            cell.classList.add("piece-red");
+                        }
+                    }
+
+                    cell.addEventListener("click", () => handleCellClick(r, c));
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+
+        function handleCellClick(r, c) {
+            const piece = boardState[r][c];
+
+            if (selectedCell === null) {
+                // เลือกตัวหมาก (เบื้องต้นให้เลือกเฉพาะฝั่งแดงเล่นก่อน)
+                if (piece && !piece.startsWith("-") && turn === 'red') {
+                    selectedCell = { r, c };
+                    renderBoard();
+                }
+            } else {
+                // ถ้าคลิกช่องเดิม ให้ยกเลิกการเลือก
+                if (selectedCell.r === r && selectedCell.c === c) {
+                    selectedCell = null;
+                    renderBoard();
+                    return;
+                }
+
+                // ขยับตัวหมากไปยังช่องปลายทาง (แบบย้ายง่ายๆ ก่อนในสเต็ปนี้)
+                boardState[r][c] = boardState[selectedCell.r][selectedCell.c];
+                boardState[selectedCell.r][selectedCell.c] = "";
+                selectedCell = null;
+                renderBoard();
+
+                // เปลี่ยนตาเดิน และจำลองให้ AI (ฝ่ายน้ำเงิน) เดินสุ่มแบบง่ายๆ หลังจากผู้เล่นเดิน
+                turn = 'blue';
+                document.getElementById("status").innerText = "ตาเดิน: AI (กำลังคิด...)";
+                
+                setTimeout(makeRandomAIMove, 600);
+            }
+        }
+
+        // ฟังก์ชันจำลอง AI เดินสุ่ม (สำหรับทดสอบโครงสร้างพื้นฐาน)
+        function makeRandomAIMove() {
+            let bluePieces = [];
+            for (let r = 0; r < 8; r++) {
+                for (let c = 0; c < 8; c++) {
+                    if (boardState[r][c].startsWith("-")) {
+                        bluePieces.push({ r, c });
+                    }
+                }
+            }
+
+            if (bluePieces.length > 0) {
+                // สุ่มเลือกตัวหมากของ AI 1 ตัว
+                let randomPiece = bluePieces[Math.floor(Math.random() * bluePieces.length)];
+                // สุ่มขยับเดินไปรอบๆ ช่องใกล้เคียง (ตัวอย่างจำลองแบบง่าย)
+                let moves = [
+                    {r: randomPiece.r + 1, c: randomPiece.c},
+                    {r: randomPiece.r, c: randomPiece.c + 1},
+                    {r: randomPiece.r, c: randomPiece.c - 1}
+                ];
+                let validMoves = moves.filter(m => m.r >= 0 && m.r < 8 && m.c >= 0 && m.c < 8 && !boardState[m.r][m.c].startsWith("-"));
+                
+                if (validMoves.length > 0) {
+                    let target = validMoves[Math.floor(Math.random() * validMoves.length)];
+                    boardState[target.r][target.c] = boardState[randomPiece.r][randomPiece.c];
+                    boardState[randomPiece.r][randomPiece.c] = "";
+                }
+            }
+
+            turn = 'red';
+            document.getElementById("status").innerText = "ตาเดิน: ผู้เล่นสีแดง";
+            renderBoard();
+        }
+
+        // เริ่มต้นแสดงผลกระดานครั้งแรก
+        renderBoard();
+    </script>
+
+</body>
+</html>
