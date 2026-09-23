@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>หมากรุกไทย ออนไลน์</title>
+
+<style>
+
+*{
+    box-sizing:border-box;
+}
+
+html,
+body{
+    margin:0;
+    padding:0;
+}
+
+body{
+
+    font-family:
+        "Sarabun",
+        "Noto Sans Thai",
+        Tahoma,
+        sans-serif;
+
+    min-height:100vh;
+
+    background:
+        radial-gradient(
+            circle at top,
+            #fffaf2 0%,
+            #f2e9da 45%,
+            #e6d8c2 100%
+        );
+
+    color:#33261b;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    padding:20px 12px;
+
+}
+
+/* =========================
+   GAME CONTAINER
+========================= */
+
+.game{
+
+    width:100%;
+    max-width:520px;
+
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.header{
+
+    width:100%;
+    text-align:center;
+
+    margin-bottom:14px;
+
+}
+
+.logo{
+
+    font-size:15px;
+    font-weight:600;
+
+    color:#8a5b2e;
+
+    letter-spacing:.5px;
+
+    margin-bottom:3px;
+
+}
+
+.header h1{
+
+    margin:0;
+
+    font-size:27px;
+
+    font-weight:700;
+
+    color:#4a301b;
+
+    letter-spacing:.2px;
+
+}
+
+.subtitle{
+
+    margin-top:3px;
+
+    font-size:13px;
+
+    color:#8b7a67;
+
+}
+
+/* =========================
+   STATUS
+========================= */
+
+.status-box{
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+
+    min-width:230px;
+
+    padding:8px 18px;
+
+    margin-bottom:14px;
+
+    border-radius:30px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fffdf9,
+            #f5eee4
+        );
+
+    border:1px solid #dfcfba;
+
+    box-shadow:
+        0 3px 10px rgba(75,45,20,.10),
+        inset 0 1px 0 rgba(255,255,255,.9);
+
+    font-size:14px;
+    font-weight:600;
+
+    color:#60472e;
+
+}
+
+.status-dot{
+
+    width:9px;
+    height:9px;
+
+    border-radius:50%;
+
+    background:#7c9a48;
+
+    box-shadow:
+        0 0 0 3px rgba(124,154,72,.15);
+
+}
+
+/* =========================
+   BOARD FRAME
+========================= */
+
+.board-frame{
+
+    padding:9px;
+
+    border-radius:10px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #9a6330,
+            #5e3518
+        );
+
+    box-shadow:
+
+        0 16px 30px rgba(50,30,15,.25),
+
+        0 3px 5px rgba(0,0,0,.20),
+
+        inset 0 1px 1px rgba(255,255,255,.35);
+
+}
+
+/* =========================
+   BOARD
+========================= */
+
+#board{
+
+    width:min(88vw, 440px);
+    height:min(88vw, 440px);
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(8, 1fr);
+
+    grid-template-rows:
+        repeat(8, 1fr);
+
+    overflow:hidden;
+
+    border:2px solid #442714;
+
+    border-radius:4px;
+
+    background:#8b5a2b;
+
+    box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,.15);
+
+}
+
+/* =========================
+   CELL
+========================= */
+
+.cell{
+
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    cursor:pointer;
+
+    user-select:none;
+
+    transition:
+        filter .12s ease,
+        background .12s ease;
+
+}
+
+.light{
+
+    background:
+        linear-gradient(
+            135deg,
+            #f2d8ae,
+            #e5c18e
+        );
+
+}
+
+.dark{
+
+    background:
+        linear-gradient(
+            135deg,
+            #b77b48,
+            #955f35
+        );
+
+}
+
+/* ลายไม้บาง ๆ */
+
+.light::after,
+.dark::after{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    pointer-events:none;
+
+    opacity:.13;
+
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent 0px,
+            transparent 7px,
+            rgba(80,40,10,.18) 8px
+        );
+
+}
+
+/* =========================
+   SELECTED
+========================= */
+
+.selected{
+
+    background:
+        linear-gradient(
+            135deg,
+            #d8df92,
+            #b5c56d
+        ) !important;
+
+    box-shadow:
+        inset 0 0 0 3px rgba(255,255,255,.35),
+        inset 0 0 15px rgba(74,95,28,.25);
+
+}
+
+/* จุดกลางช่องเลือก */
+
+.selected::before{
+
+    content:"";
+
+    position:absolute;
+
+    width:9px;
+    height:9px;
+
+    border-radius:50%;
+
+    background:rgba(65,85,30,.45);
+
+    z-index:2;
+
+}
+
+/* =========================
+   PIECE
+========================= */
+
+.piece{
+
+    position:relative;
+
+    width:76%;
+    height:76%;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    border-radius:50%;
+
+    font-weight:700;
+
+    font-size:clamp(10px, 2.8vw, 14px);
+
+    line-height:1;
+
+    letter-spacing:-.3px;
+
+    box-shadow:
+
+        0 4px 6px rgba(0,0,0,.28),
+
+        0 1px 1px rgba(0,0,0,.35),
+
+        inset 0 2px 2px rgba(255,255,255,.45),
+
+        inset 0 -3px 5px rgba(0,0,0,.15);
+
+    transition:
+
+        transform .12s ease,
+
+        box-shadow .12s ease;
+
+    z-index:3;
+
+}
+
+/* ขอบด้านในของหมาก */
+
+.piece::after{
+
+    content:"";
+
+    position:absolute;
+
+    inset:4px;
+
+    border-radius:50%;
+
+    border:1px solid rgba(255,255,255,.30);
+
+    pointer-events:none;
+
+}
+
+/* =========================
+   WHITE PIECES
+========================= */
+
+.piece-white{
+
+    color:#34281e;
+
+    background:
+        radial-gradient(
+            circle at 35% 28%,
+            #ffffff 0%,
+            #f5f1e9 45%,
+            #d8d0c3 100%
+        );
+
+    border:2px solid #665b4e;
+
+    text-shadow:
+        0 1px 0 #fff;
+
+}
+
+/* =========================
+   BLACK PIECES
+========================= */
+
+.piece-black{
+
+    color:#f5eee4;
+
+    background:
+        radial-gradient(
+            circle at 35% 25%,
+            #66615a 0%,
+            #383532 42%,
+            #1c1b1a 100%
+        );
+
+    border:2px solid #111;
+
+    text-shadow:
+        0 1px 2px #000;
+
+}
+
+/* =========================
+   PIECE HOVER
+========================= */
+
+.cell:hover .piece{
+
+    transform:translateY(-2px);
+
+    box-shadow:
+
+        0 6px 9px rgba(0,0,0,.30),
+
+        inset 0 2px 2px rgba(255,255,255,.45);
+
+}
+
+/* =========================
+   CONTROLS
+========================= */
+
+.controls{
+
+    width:100%;
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:9px;
+
+    margin-top:16px;
+
+}
+
+.btn{
+
+    border:0;
+
+    min-width:120px;
+
+    padding:9px 17px;
+
+    border-radius:8px;
+
+    cursor:pointer;
+
+    font-family:inherit;
+
+    font-size:14px;
+
+    font-weight:600;
+
+    color:#fff;
+
+    background:
+        linear-gradient(
+            180deg,
+            #a86d36,
+            #7d4c24
+        );
+
+    box-shadow:
+
+        0 3px 6px rgba(50,30,10,.22),
+
+        inset 0 1px 0 rgba(255,255,255,.25);
+
+    transition:
+
+        transform .12s ease,
+        filter .12s ease;
+
+}
+
+.btn:hover{
+
+    filter:brightness(1.08);
+
+}
+
+.btn:active{
+
+    transform:translateY(1px);
+
+}
+
+/* =========================
+   GAME INFO
+========================= */
+
+.game-info{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:25px;
+
+    margin-top:13px;
+
+    color:#806c57;
+
+    font-size:12px;
+
+}
+
+.info-item{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:5px;
+
+}
+
+.info-icon{
+
+    font-size:14px;
+
+}
+
+/* =========================
+   MOBILE
+========================= */
+
+@media(max-width:430px){
+
+    body{
+
+        padding:12px 8px;
+
+    }
+
+    .header h1{
+
+        font-size:23px;
+
+    }
+
+    .subtitle{
+
+        font-size:12px;
+
+    }
+
+    .status-box{
+
+        font-size:13px;
+
+        padding:7px 15px;
+
+        margin-bottom:11px;
+
+    }
+
+    .board-frame{
+
+        padding:7px;
+
+    }
+
+    .controls{
+
+        margin-top:13px;
+
+    }
+
+    .btn{
+
+        min-width:110px;
+
+        padding:8px 12px;
+
+        font-size:13px;
+
+    }
+
+}
+
+/* =========================
+   SMALL PHONE
+========================= */
+
+@media(max-width:350px){
+
+    .header h1{
+
+        font-size:21px;
+
+    }
+
+    .board-frame{
+
+        padding:5px;
+
+    }
+
+    .game-info{
+
+        gap:12px;
+
+    }
+
+}
+
+/* =========================
+   ANIMATION
+========================= */
+
+@keyframes pieceIn{
+
+    from{
+
+        transform:
+            scale(.75);
+
+        opacity:.3;
+
+    }
+
+    to{
+
+        transform:
+            scale(1);
+
+        opacity:1;
+
+    }
+
+}
+
+.piece{
+
+    animation:
+        pieceIn .12s ease-out;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="game">
+
+    <!-- HEADER -->
+
+    <div class="header">
+
+        <div class="logo">
+            THAI CHESS
+        </div>
+
+        <h1>
+            ♞ หมากรุกไทย
+        </h1>
+
+        <div class="subtitle">
+            เล่นหมากรุกไทยออนไลน์
+        </div>
+
+    </div>
+
+
+    <!-- STATUS -->
+
+    <div id="status"
+         class="status-box">
+
+        <span class="status-dot"></span>
+
+        <span>
+            ตาของคุณ • ฝ่ายเดินก่อน
+        </span>
+
+    </div>
+
+
+    <!-- BOARD -->
+
+    <div class="board-frame">
+
+        <div id="board"></div>
+
+    </div>
+
+
+    <!-- CONTROLS -->
+
+    <div class="controls">
+
+        <button
+            class="btn"
+            onclick="resetGame()">
+
+            ↻ เริ่มเกมใหม่
+
+        </button>
+
+    </div>
+
+
+    <!-- INFO -->
+
+    <div class="game-info">
+
+        <div class="info-item">
+
+            <span class="info-icon">♙</span>
+
+            <span>คุณ</span>
+
+        </div>
+
+        <div class="info-item">
+
+            <span class="info-icon">♟</span>
+
+            <span>AI</span>
+
+        </div>
+
+        <div class="info-item">
+
+            <span class="info-icon">8×8</span>
+
+            <span>กระดาน</span>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+/* =====================================
+   INITIAL BOARD
+===================================== */
+
+const initialBoard = [
+
+    [
+        "b-ร",
+        "b-ม",
+        "b-โ",
+        "b-เม",
+        "b-ข",
+        "b-โ",
+        "b-ม",
+        "b-ร"
+    ],
+
+    [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+    ],
+
+    [
+        "b-บ",
+        "b-บ",
+        "b-บ",
+        "b-บ",
+        "b-บ",
+        "b-บ",
+        "b-บ",
+        "b-บ"
+    ],
+
+    [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+    ],
+
+    [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+    ],
+
+    [
+        "w-บ",
+        "w-บ",
+        "w-บ",
+        "w-บ",
+        "w-บ",
+        "w-บ",
+        "w-บ",
+        "w-บ"
+    ],
+
+    [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+    ],
+
+    [
+        "w-ร",
+        "w-ม",
+        "w-โ",
+        "w-เม",
+        "w-ข",
+        "w-โ",
+        "w-ม",
+        "w-ร"
+    ]
+
+];
+
+
+/* =====================================
+   GAME STATE
+===================================== */
+
+let boardState =
+    JSON.parse(
+        JSON.stringify(initialBoard)
+    );
+
+let selectedCell = null;
+
+let turn = "w";
+
+
+/* =====================================
+   PIECE LABEL
+===================================== */
+
+const pieceLabels = {
+
+    "ร":"เรือ",
+
+    "ม":"ม้า",
+
+    "โ":"โคน",
+
+    "เม":"เม็ด",
+
+    "ข":"ขุน",
+
+    "บ":"เบี้ย"
+
+};
+
+
+/* =====================================
+   RENDER BOARD
+===================================== */
+
+function renderBoard(){
+
+    const boardElement =
+        document.getElementById("board");
+
+    boardElement.innerHTML = "";
+
+
+    for(let r = 0; r < 8; r++){
+
+        for(let c = 0; c < 8; c++){
+
+            const cell =
+                document.createElement("div");
+
+
+            cell.classList.add("cell");
+
+
+            /*
+             * สีตาราง
+             */
+
+            cell.classList.add(
+
+                (r + c) % 2 === 0
+                    ? "light"
+                    : "dark"
+
+            );
+
+
+            /*
+             * ช่องที่เลือก
+             */
+
+            if(
+
+                selectedCell &&
+
+                selectedCell.r === r &&
+
+                selectedCell.c === c
+
+            ){
+
+                cell.classList.add("selected");
+
+            }
+
+
+            /*
+             * ตัวหมาก
+             */
+
+            const val =
+                boardState[r][c];
+
+
+            if(val){
+
+                const [
+                    color,
+                    type
+                ] = val.split("-");
+
+
+                const pieceDiv =
+                    document.createElement("div");
+
+
+                pieceDiv.classList.add(
+                    "piece"
+                );
+
+
+                pieceDiv.classList.add(
+
+                    color === "w"
+                        ? "piece-white"
+                        : "piece-black"
+
+                );
+
+
+                pieceDiv.innerText =
+                    pieceLabels[type];
+
+
+                cell.appendChild(
+                    pieceDiv
+                );
+
+            }
+
+
+            /*
+             * Click
+             */
+
+            cell.addEventListener(
+                "click",
+                () =>
+                    handleCellClick(r,c)
+            );
+
+
+            boardElement.appendChild(
+                cell
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =====================================
+   CLICK CELL
+===================================== */
+
+function handleCellClick(r,c){
+
+    const val =
+        boardState[r][c];
+
+
+    /*
+     * ยังไม่ได้เลือกหมาก
+     */
+
+    if(selectedCell === null){
+
+        if(
+
+            val &&
+
+            val.startsWith("w") &&
+
+            turn === "w"
+
+        ){
+
+            selectedCell = {
+                r:r,
+                c:c
+            };
+
+            renderBoard();
+
+        }
+
+        return;
+
+    }
+
+
+    /*
+     * คลิกช่องเดิม
+     */
+
+    if(
+
+        selectedCell.r === r &&
+
+        selectedCell.c === c
+
+    ){
+
+        selectedCell = null;
+
+        renderBoard();
+
+        return;
+
+    }
+
+
+    /*
+     * เดินหมาก
+     */
+
+    boardState[r][c] =
+        boardState[
+            selectedCell.r
+        ][
+            selectedCell.c
+        ];
+
+
+    boardState[
+        selectedCell.r
+    ][
+        selectedCell.c
+    ] = "";
+
+
+    selectedCell = null;
+
+
+    renderBoard();
+
+
+    /*
+     * เปลี่ยนตา
+     */
+
+    turn = "b";
+
+
+    setStatus(
+        "AI กำลังคิด...",
+        true
+    );
+
+
+    setTimeout(
+        makeAIMove,
+        600
+    );
+
+}
+
+
+/* =====================================
+   STATUS
+===================================== */
+
+function setStatus(
+    text,
+    thinking = false
+){
+
+    const status =
+        document.getElementById(
+            "status"
+        );
+
+
+    status.innerHTML = `
+
+        <span
+            class="status-dot"
+            style="
+                background:
+                ${thinking
+                    ? "#d49b43"
+                    : "#7c9a48"};
+            "
+        ></span>
+
+        <span>
+            ${text}
+        </span>
+
+    `;
+
+}
+
+
+/* =====================================
+   AI MOVE
+===================================== */
+
+function makeAIMove(){
+
+    let blackPieces = [];
+
+
+    /*
+     * หาเบี้ยดำทั้งหมด
+     */
+
+    for(let r = 0; r < 8; r++){
+
+        for(let c = 0; c < 8; c++){
+
+            if(
+
+                boardState[r][c] &&
+
+                boardState[r][c]
+                    .startsWith("b")
+
+            ){
+
+                blackPieces.push({
+                    r:r,
+                    c:c
+                });
+
+            }
+
+        }
+
+    }
+
+
+    /*
+     * ถ้ามีหมากดำ
+     */
+
+    if(blackPieces.length > 0){
+
+        const p =
+            blackPieces[
+                Math.floor(
+                    Math.random() *
+                    blackPieces.length
+                )
+            ];
+
+
+        const moves = [
+
+            {
+                r:p.r + 1,
+                c:p.c
+            },
+
+            {
+                r:p.r,
+                c:p.c + 1
+            },
+
+            {
+                r:p.r,
+                c:p.c - 1
+            }
+
+        ];
+
+
+        const valid =
+            moves.filter(
+
+                m =>
+
+                    m.r >= 0 &&
+
+                    m.r < 8 &&
+
+                    m.c >= 0 &&
+
+                    m.c < 8 &&
+
+                    !(
+                        boardState[m.r][m.c]
+                        &&
+                        boardState[m.r][m.c]
+                            .startsWith("b")
+                    )
+
+            );
+
+
+        if(valid.length > 0){
+
+            const target =
+                valid[
+                    Math.floor(
+                        Math.random()
+                        * valid.length
+                    )
+                ];
+
+
+            boardState[
+                target.r
+            ][
+                target.c
+            ] =
+                boardState[
+                    p.r
+                ][
+                    p.c
+                ];
+
+
+            boardState[
+                p.r
+            ][
+                p.c
+            ] = "";
+
+        }
+
+    }
+
+
+    turn = "w";
+
+
+    setStatus(
+        "ตาของคุณ • ฝ่ายเดินก่อน",
+        false
+    );
+
+
+    renderBoard();
+
+}
+
+
+/* =====================================
+   RESET
+===================================== */
+
+function resetGame(){
+
+    boardState =
+        JSON.parse(
+            JSON.stringify(
+                initialBoard
+            )
+        );
+
+
+    selectedCell = null;
+
+    turn = "w";
+
+
+    setStatus(
+        "ตาของคุณ • ฝ่ายเดินก่อน",
+        false
+    );
+
+
+    renderBoard();
+
+}
+
+
+/* =====================================
+   START
+===================================== */
+
+renderBoard();
+
+</script>
+
+</body>
+</html>
