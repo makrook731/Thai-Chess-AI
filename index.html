@@ -1,0 +1,2768 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
+
+<title>หมากรุกไทย ออนไลน์ V2</title>
+
+<style>
+
+/* =========================================================
+   RESET
+========================================================= */
+
+*{
+    box-sizing:border-box;
+}
+
+html,
+body{
+    margin:0;
+    padding:0;
+}
+
+body{
+
+    font-family:
+        "Sarabun",
+        "Noto Sans Thai",
+        Tahoma,
+        sans-serif;
+
+    min-height:100vh;
+
+    background:
+        linear-gradient(
+            135deg,
+            #3a2111 0%,
+            #70451f 35%,
+            #3d2413 100%
+        );
+
+    color:#fff;
+
+    display:flex;
+    justify-content:center;
+
+    padding:10px;
+
+}
+
+
+/* =========================================================
+   GAME
+========================================================= */
+
+.game{
+
+    width:100%;
+    max-width:620px;
+
+    min-height:calc(100vh - 20px);
+
+    display:flex;
+    flex-direction:column;
+
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.header{
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:space-between;
+
+    gap:12px;
+
+    padding:8px 4px 10px;
+
+}
+
+
+.brand{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+}
+
+
+.brand-icon{
+
+    width:48px;
+    height:48px;
+
+    display:flex;
+
+    align-items:center;
+    justify-content:center;
+
+    font-size:38px;
+
+    color:#fff8ed;
+
+    filter:
+        drop-shadow(
+            0 3px 3px rgba(0,0,0,.35)
+        );
+
+}
+
+
+.brand-title{
+
+    font-size:22px;
+
+    font-weight:700;
+
+    line-height:1.15;
+
+    color:#fff8ed;
+
+}
+
+
+.brand-sub{
+
+    font-size:12px;
+
+    color:#d9c1a0;
+
+    margin-top:2px;
+
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:8px;
+
+    padding:9px 15px;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fff9ed,
+            #ead8bd
+        );
+
+    color:#4d3019;
+
+    border:2px solid #a97a45;
+
+    box-shadow:
+        0 4px 10px rgba(0,0,0,.28);
+
+    font-size:14px;
+
+    font-weight:700;
+
+    white-space:nowrap;
+
+}
+
+
+.status-dot{
+
+    width:10px;
+    height:10px;
+
+    border-radius:50%;
+
+    background:#48a85a;
+
+    box-shadow:
+        0 0 0 3px rgba(72,168,90,.15);
+
+}
+
+
+/* =========================================================
+   BOARD AREA
+========================================================= */
+
+.board-wrap{
+
+    width:100%;
+
+    display:flex;
+
+    justify-content:center;
+
+    margin-top:4px;
+
+}
+
+
+.board-frame{
+
+    width:min(
+        calc(100vw - 24px),
+        560px
+    );
+
+    aspect-ratio:1;
+
+    padding:9px;
+
+    border-radius:12px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #b17a40,
+            #603817 48%,
+            #3d220f
+        );
+
+    border:2px solid #b27a3d;
+
+    box-shadow:
+
+        0 14px 30px
+        rgba(0,0,0,.40),
+
+        inset 0 2px 2px
+        rgba(255,255,255,.18);
+
+}
+
+
+/* =========================================================
+   BOARD
+========================================================= */
+
+#board{
+
+    width:100%;
+    height:100%;
+
+    display:grid;
+
+    grid-template-columns:
+        repeat(8,1fr);
+
+    grid-template-rows:
+        repeat(8,1fr);
+
+    overflow:hidden;
+
+    border:1px solid #70431e;
+
+    background:#dba65e;
+
+}
+
+
+/* =========================================================
+   CELL
+========================================================= */
+
+.cell{
+
+    position:relative;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    cursor:pointer;
+
+    user-select:none;
+
+    overflow:hidden;
+
+}
+
+
+.cell{
+
+    background:
+        linear-gradient(
+            135deg,
+            #e9b96f,
+            #dda45c
+        );
+
+}
+
+
+/* subtle wood lines */
+
+.cell::after{
+
+    content:"";
+
+    position:absolute;
+
+    inset:0;
+
+    pointer-events:none;
+
+    opacity:.13;
+
+    background:
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 8px,
+            rgba(80,40,10,.30) 9px
+        );
+
+}
+
+
+/* =========================================================
+   SELECTED
+========================================================= */
+
+.cell.selected{
+
+    background:
+        #b98548 !important;
+
+    box-shadow:
+        inset 0 0 0 3px
+        rgba(255,255,255,.20);
+
+}
+
+
+/* =========================================================
+   LEGAL MOVE
+========================================================= */
+
+.move-dot{
+
+    position:absolute;
+
+    width:18%;
+
+    aspect-ratio:1;
+
+    border-radius:50%;
+
+    background:
+        rgba(76,48,23,.42);
+
+    z-index:5;
+
+}
+
+
+/* =========================================================
+   CAPTURE TARGET
+========================================================= */
+
+.capture-ring{
+
+    position:absolute;
+
+    width:82%;
+
+    height:82%;
+
+    border-radius:50%;
+
+    border:4px solid
+        rgba(108,48,26,.48);
+
+    z-index:6;
+
+    pointer-events:none;
+
+}
+
+
+/* =========================================================
+   PIECES
+========================================================= */
+
+.piece{
+
+    position:relative;
+
+    z-index:8;
+
+    width:82%;
+    height:82%;
+
+    display:flex;
+
+    align-items:center;
+
+    justify-content:center;
+
+    pointer-events:none;
+
+    filter:
+        drop-shadow(
+            0 3px 2px rgba(0,0,0,.30)
+        );
+
+    transition:
+        transform .12s ease;
+
+}
+
+
+.cell:hover .piece{
+
+    transform:
+        translateY(-2px)
+        scale(1.03);
+
+}
+
+
+/* =========================================================
+   SVG PIECE
+========================================================= */
+
+.piece svg{
+
+    width:100%;
+    height:100%;
+
+    overflow:visible;
+
+}
+
+
+/* =========================================================
+   WHITE
+========================================================= */
+
+.piece-white{
+
+    color:#fffdf7;
+
+    filter:
+        drop-shadow(
+            0 3px 2px rgba(75,45,20,.45)
+        );
+
+}
+
+
+/* =========================================================
+   BLACK
+========================================================= */
+
+.piece-black{
+
+    color:#090706;
+
+    filter:
+        drop-shadow(
+            0 3px 2px rgba(255,255,255,.10)
+        );
+
+}
+
+
+/* =========================================================
+   PROMOTED PAWN
+========================================================= */
+
+.promoted{
+
+    outline:
+        2px solid
+        rgba(255,216,120,.7);
+
+    border-radius:50%;
+
+}
+
+
+/* =========================================================
+   CONTROLS
+========================================================= */
+
+.controls{
+
+    display:flex;
+
+    justify-content:center;
+
+    gap:9px;
+
+    margin-top:13px;
+
+}
+
+
+.btn{
+
+    border:0;
+
+    border-radius:9px;
+
+    padding:10px 20px;
+
+    font-family:inherit;
+
+    font-size:14px;
+
+    font-weight:700;
+
+    cursor:pointer;
+
+    color:#4d3019;
+
+    background:
+        linear-gradient(
+            180deg,
+            #fffaf0,
+            #e8d7bb
+        );
+
+    border:1px solid #bd9868;
+
+    box-shadow:
+        0 4px 8px rgba(0,0,0,.25);
+
+}
+
+
+.btn-primary{
+
+    color:#fff;
+
+    background:
+        linear-gradient(
+            180deg,
+            #b87835,
+            #774319
+        );
+
+    border-color:#c38a4b;
+
+}
+
+
+.btn:active{
+
+    transform:
+        translateY(1px);
+
+}
+
+
+/* =========================================================
+   INFO
+========================================================= */
+
+.info{
+
+    text-align:center;
+
+    margin-top:9px;
+
+    color:#d6bd9d;
+
+    font-size:12px;
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:500px){
+
+    body{
+
+        padding:5px;
+
+    }
+
+    .game{
+
+        min-height:
+            calc(100vh - 10px);
+
+    }
+
+    .header{
+
+        padding:
+            5px 3px 8px;
+
+    }
+
+    .brand-icon{
+
+        width:38px;
+        height:38px;
+
+        font-size:31px;
+
+    }
+
+    .brand-title{
+
+        font-size:18px;
+
+    }
+
+    .brand-sub{
+
+        font-size:10px;
+
+    }
+
+    .status{
+
+        padding:
+            7px 10px;
+
+        font-size:12px;
+
+    }
+
+    .board-frame{
+
+        width:
+            calc(100vw - 14px);
+
+        padding:6px;
+
+    }
+
+    .controls{
+
+        margin-top:9px;
+
+    }
+
+    .btn{
+
+        padding:
+            8px 15px;
+
+        font-size:13px;
+
+    }
+
+}
+
+
+@media(max-width:370px){
+
+    .status{
+
+        font-size:11px;
+
+    }
+
+    .brand-title{
+
+        font-size:16px;
+
+    }
+
+}
+
+
+/* =========================================================
+   MOVE ANIMATION
+========================================================= */
+
+@keyframes pieceIn{
+
+    from{
+
+        opacity:0;
+
+        transform:
+            scale(.72);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:
+            scale(1);
+
+    }
+
+}
+
+
+.piece{
+
+    animation:
+        pieceIn .13s ease-out;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="game">
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <div class="header">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                ♞
+            </div>
+
+            <div>
+
+                <div class="brand-title">
+                    หมากรุกไทย ออนไลน์
+                </div>
+
+                <div class="brand-sub">
+                    Thai Chess • Makruk
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div id="status"
+             class="status">
+
+            <span
+                class="status-dot">
+            </span>
+
+            <span id="statusText">
+                ตาของคุณ • ฝ่ายขาว
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         BOARD
+    ====================================================== -->
+
+    <div class="board-wrap">
+
+        <div class="board-frame">
+
+            <div id="board"></div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         CONTROLS
+    ====================================================== -->
+
+    <div class="controls">
+
+        <button
+            class="btn btn-primary"
+            onclick="resetGame()">
+
+            ↻ เริ่มเกมใหม่
+
+        </button>
+
+    </div>
+
+
+    <div id="info"
+         class="info">
+
+        แตะหมากเพื่อดูตาที่สามารถเดินได้
+
+    </div>
+
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   PIECE TYPES
+
+   R = เรือ
+   N = ม้า
+   K = ขุน
+   M = เม็ด
+   C = โคน
+   P = เบี้ย
+========================================================= */
+
+
+/* =========================================================
+   INITIAL POSITION
+
+   Thai Makruk:
+
+   R N C K M C N R
+   . . . . . . . .
+   P P P P P P P P
+
+   ...
+   P P P P P P P P
+   . . . . . . . .
+   R N C K M C N R
+
+   White = bottom
+   Black = top
+========================================================= */
+
+const initialBoard = [
+
+    [
+        "b-R",
+        "b-N",
+        "b-C",
+        "b-K",
+        "b-M",
+        "b-C",
+        "b-N",
+        "b-R"
+    ],
+
+    [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    ],
+
+    [
+        "b-P",
+        "b-P",
+        "b-P",
+        "b-P",
+        "b-P",
+        "b-P",
+        "b-P",
+        "b-P"
+    ],
+
+    [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    ],
+
+    [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    ],
+
+    [
+        "w-P",
+        "w-P",
+        "w-P",
+        "w-P",
+        "w-P",
+        "w-P",
+        "w-P",
+        "w-P"
+    ],
+
+    [
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null,
+        null
+    ],
+
+    [
+        "w-R",
+        "w-N",
+        "w-C",
+        "w-K",
+        "w-M",
+        "w-C",
+        "w-N",
+        "w-R"
+    ]
+
+];
+
+
+/* =========================================================
+   GAME STATE
+========================================================= */
+
+let boardState =
+    cloneBoard(initialBoard);
+
+let turn = "w";
+
+let selected = null;
+
+let legalTargets = [];
+
+let gameOver = false;
+
+let aiThinking = false;
+
+
+/* =========================================================
+   CLONE
+========================================================= */
+
+function cloneBoard(board){
+
+    return board.map(
+        row => [...row]
+    );
+
+}
+
+
+/* =========================================================
+   COLOR
+========================================================= */
+
+function colorOf(piece){
+
+    if(!piece) return null;
+
+    return piece[0];
+
+}
+
+
+/* =========================================================
+   TYPE
+========================================================= */
+
+function typeOf(piece){
+
+    if(!piece) return null;
+
+    return piece[2];
+
+}
+
+
+/* =========================================================
+   SVG PIECES
+
+   สร้างรูปทรงหมากเอง
+   ไม่ต้องโหลดไฟล์ภายนอก
+========================================================= */
+
+function pieceSVG(type){
+
+    const common = `
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linejoin="round"
+        stroke-linecap="round"
+    `;
+
+
+    /* -----------------------------------------------------
+       ROOK
+    ------------------------------------------------------ */
+
+    if(type === "R"){
+
+        return `
+
+        <svg viewBox="0 0 100 100">
+
+            <path
+                d="
+                M25 20
+                L38 20
+                L38 28
+                L50 28
+                L50 20
+                L62 20
+                L62 28
+                L75 28
+                L72 40
+                L68 44
+                L68 67
+                L77 75
+                L77 82
+                L23 82
+                L23 75
+                L32 67
+                L32 44
+                L28 40
+                Z
+                "
+                fill="currentColor"
+                ${common}
+            />
+
+            <rect
+                x="27"
+                y="68"
+                width="46"
+                height="6"
+                rx="2"
+                fill="currentColor"
+            />
+
+        </svg>
+
+        `;
+
+    }
+
+
+    /* -----------------------------------------------------
+       KNIGHT
+    ------------------------------------------------------ */
+
+    if(type === "N"){
+
+        return `
+
+        <svg viewBox="0 0 100 100">
+
+            <path
+                d="
+                M26 81
+                L72 81
+                L72 73
+                L61 69
+                L58 58
+                C76 53 78 38 69 26
+                C63 18 54 14 43 17
+                L30 22
+                L35 33
+                L26 43
+                L31 53
+                L27 65
+                L21 73
+                Z
+                "
+                fill="currentColor"
+                ${common}
+            />
+
+            <path
+                d="
+                M42 25
+                C49 22 56 24 61 30
+                "
+                fill="none"
+                stroke="rgba(255,255,255,.45)"
+                stroke-width="3"
+            />
+
+            <circle
+                cx="58"
+                cy="31"
+                r="3"
+                fill="#d5a35e"
+            />
+
+        </svg>
+
+        `;
+
+    }
+
+
+    /* -----------------------------------------------------
+       KHON
+    ------------------------------------------------------ */
+
+    if(type === "C"){
+
+        return `
+
+        <svg viewBox="0 0 100 100">
+
+            <path
+                d="
+                M50 13
+                C42 21 33 27 32 38
+                C31 47 36 54 29 65
+                L22 72
+                L22 81
+                L78 81
+                L78 72
+                L71 65
+                C64 54 69 47 68 38
+                C67 27 58 21 50 13
+                Z
+                "
+                fill="currentColor"
+                ${common}
+            />
+
+            <rect
+                x="31"
+                y="67"
+                width="38"
+                height="7"
+                rx="2"
+                fill="currentColor"
+            />
+
+        </svg>
+
+        `;
+
+    }
+
+
+    /* -----------------------------------------------------
+       KING
+    ------------------------------------------------------ */
+
+    if(type === "K"){
+
+        return `
+
+        <svg viewBox="0 0 100 100">
+
+            <path
+                d="
+                M46 12
+                L54 12
+                L54 21
+                L63 21
+                L63 28
+                L58 28
+                C67 34 70 43 69 52
+                L68 64
+                L77 72
+                L77 83
+                L23 83
+                L23 72
+                L32 64
+                L31 52
+                C30 43 33 34 42 28
+                L37 28
+                L37 21
+                L46 21
+                Z
+                "
+                fill="currentColor"
+                ${common}
+            />
+
+            <rect
+                x="31"
+                y="68"
+                width="38"
+                height="7"
+                rx="2"
+                fill="currentColor"
+            />
+
+            <rect
+                x="39"
+                y="28"
+                width="22"
+                height="5"
+                rx="2"
+                fill="currentColor"
+            />
+
+        </svg>
+
+        `;
+
+    }
+
+
+    /* -----------------------------------------------------
+       MET
+    ------------------------------------------------------ */
+
+    if(type === "M"){
+
+        return `
+
+        <svg viewBox="0 0 100 100">
+
+            <path
+                d="
+                M50 13
+                C43 21 34 27 34 38
+                C34 48 40 54 42 61
+                L34 69
+                L28 75
+                L28 82
+                L72 82
+                L72 75
+                L66 69
+                L58 61
+                C60 54 66 48 66 38
+                C66 27 57 21 50 13
+                Z
+                "
+                fill="currentColor"
+                ${common}
+            />
+
+            <rect
+                x="36"
+                y="68"
+                width="28"
+                height="5"
+                rx="2"
+                fill="currentColor"
+            />
+
+        </svg>
+
+        `;
+
+    }
+
+
+    /* -----------------------------------------------------
+       PAWN
+    ------------------------------------------------------ */
+
+    if(type === "P"){
+
+        return `
+
+        <svg viewBox="0 0 100 100">
+
+            <circle
+                cx="50"
+                cy="50"
+                r="31"
+                fill="currentColor"
+                ${common}
+            />
+
+            <circle
+                cx="50"
+                cy="50"
+                r="22"
+                fill="none"
+                stroke="#c99550"
+                stroke-width="4"
+            />
+
+            <circle
+                cx="50"
+                cy="50"
+                r="11"
+                fill="none"
+                stroke="#c99550"
+                stroke-width="4"
+            />
+
+        </svg>
+
+        `;
+
+    }
+
+
+    return "";
+
+}
+
+
+/* =========================================================
+   RENDER
+========================================================= */
+
+function render(){
+
+    const board =
+        document.getElementById("board");
+
+    board.innerHTML = "";
+
+
+    for(
+        let r = 0;
+        r < 8;
+        r++
+    ){
+
+        for(
+            let c = 0;
+            c < 8;
+            c++
+        ){
+
+            const cell =
+                document.createElement("div");
+
+
+            cell.className =
+                "cell";
+
+
+            if(
+                selected &&
+                selected.r === r &&
+                selected.c === c
+            ){
+
+                cell.classList.add(
+                    "selected"
+                );
+
+            }
+
+
+            const target =
+                legalTargets.find(
+                    m =>
+                        m.r === r &&
+                        m.c === c
+                );
+
+
+            const piece =
+                boardState[r][c];
+
+
+            /*
+             * legal move marker
+             */
+
+            if(target){
+
+                if(piece){
+
+                    const ring =
+                        document.createElement(
+                            "div"
+                        );
+
+                    ring.className =
+                        "capture-ring";
+
+                    cell.appendChild(
+                        ring
+                    );
+
+                }else{
+
+                    const dot =
+                        document.createElement(
+                            "div"
+                        );
+
+                    dot.className =
+                        "move-dot";
+
+                    cell.appendChild(
+                        dot
+                    );
+
+                }
+
+            }
+
+
+            /*
+             * piece
+             */
+
+            if(piece){
+
+                const pieceDiv =
+                    document.createElement(
+                        "div"
+                    );
+
+                pieceDiv.className =
+                    "piece " +
+                    (
+                        colorOf(piece) === "w"
+                            ? "piece-white"
+                            : "piece-black"
+                    );
+
+
+                pieceDiv.innerHTML =
+                    pieceSVG(
+                        typeOf(piece)
+                    );
+
+
+                cell.appendChild(
+                    pieceDiv
+                );
+
+            }
+
+
+            cell.addEventListener(
+                "click",
+                () => clickCell(r,c)
+            );
+
+
+            board.appendChild(
+                cell
+            );
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   CLICK
+========================================================= */
+
+function clickCell(r,c){
+
+    if(gameOver) return;
+
+    if(aiThinking) return;
+
+
+    const piece =
+        boardState[r][c];
+
+
+    /*
+     * ไม่มีหมากถูกเลือก
+     */
+
+    if(!selected){
+
+        if(
+            piece &&
+            colorOf(piece) === turn
+        ){
+
+            selectPiece(r,c);
+
+        }
+
+        return;
+
+    }
+
+
+    /*
+     * ถ้าคลิกหมากฝ่ายตัวเอง
+     * ให้เปลี่ยนตัวเลือก
+     */
+
+    if(
+        piece &&
+        colorOf(piece) === turn
+    ){
+
+        selectPiece(r,c);
+
+        return;
+
+    }
+
+
+    /*
+     * ตรวจว่าช่องนี้เดินได้ไหม
+     */
+
+    const move =
+        legalTargets.find(
+            m =>
+                m.r === r &&
+                m.c === c
+        );
+
+
+    if(!move){
+
+        return;
+
+    }
+
+
+    /*
+     * เดินจริง
+     */
+
+    makeMove(
+        selected.r,
+        selected.c,
+        r,
+        c
+    );
+
+}
+
+
+/* =========================================================
+   SELECT PIECE
+========================================================= */
+
+function selectPiece(r,c){
+
+    selected = {
+        r:r,
+        c:c
+    };
+
+
+    legalTargets =
+        getLegalMoves(
+            boardState,
+            r,
+            c
+        );
+
+
+    render();
+
+}
+
+
+/* =========================================================
+   MAKE MOVE
+========================================================= */
+
+function makeMove(
+    fr,
+    fc,
+    tr,
+    tc
+){
+
+    const piece =
+        boardState[fr][fc];
+
+
+    /*
+     * ย้าย
+     */
+
+    boardState[tr][tc] =
+        piece;
+
+
+    boardState[fr][fc] =
+        null;
+
+
+    /*
+     * Promotion
+     */
+
+    if(
+        typeOf(piece) === "P"
+    ){
+
+        if(
+            colorOf(piece) === "w" &&
+            tr === 2
+        ){
+
+            boardState[tr][tc] =
+                "w-M";
+
+        }
+
+
+        if(
+            colorOf(piece) === "b" &&
+            tr === 5
+        ){
+
+            boardState[tr][tc] =
+                "b-M";
+
+        }
+
+    }
+
+
+    selected = null;
+
+    legalTargets = [];
+
+
+    /*
+     * เปลี่ยนตา
+     */
+
+    turn =
+        turn === "w"
+            ? "b"
+            : "w";
+
+
+    /*
+     * ตรวจเกม
+     */
+
+    if(checkGameEnd()){
+
+        render();
+
+        return;
+
+    }
+
+
+    render();
+
+
+    /*
+     * AI
+     */
+
+    if(turn === "b"){
+
+        aiThinking = true;
+
+        setStatus(
+            "AI กำลังคิด...",
+            true
+        );
+
+
+        setTimeout(
+            makeAIMove,
+            500
+        );
+
+    }else{
+
+        setStatus(
+            "ตาของคุณ • ฝ่ายขาว",
+            false
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   AI
+========================================================= */
+
+function makeAIMove(){
+
+    if(gameOver){
+
+        aiThinking = false;
+
+        return;
+
+    }
+
+
+    const moves =
+        getAllLegalMoves(
+            boardState,
+            "b"
+        );
+
+
+    if(moves.length === 0){
+
+        aiThinking = false;
+
+        checkGameEnd();
+
+        return;
+
+    }
+
+
+    /*
+     * ตอนนี้ AI เลือกจาก
+     * "ตาที่ถูกกฎหมาย" เท่านั้น
+     */
+
+    const move =
+        moves[
+            Math.floor(
+                Math.random()
+                * moves.length
+            )
+        ];
+
+
+    boardState[
+        move.to.r
+    ][
+        move.to.c
+    ] =
+        boardState[
+            move.from.r
+        ][
+            move.from.c
+        ];
+
+
+    boardState[
+        move.from.r
+    ][
+        move.from.c
+    ] = null;
+
+
+    /*
+     * Promotion
+     */
+
+    if(
+        boardState[
+            move.to.r
+        ][
+            move.to.c
+        ] === "b-P"
+        &&
+        move.to.r === 5
+    ){
+
+        boardState[
+            move.to.r
+        ][
+            move.to.c
+        ] = "b-M";
+
+    }
+
+
+    turn = "w";
+
+    aiThinking = false;
+
+
+    if(
+        !checkGameEnd()
+    ){
+
+        setStatus(
+            "ตาของคุณ • ฝ่ายขาว",
+            false
+        );
+
+    }
+
+
+    render();
+
+}
+
+
+/* =========================================================
+   GET LEGAL MOVES
+========================================================= */
+
+function getLegalMoves(
+    board,
+    r,
+    c
+){
+
+    const piece =
+        board[r][c];
+
+
+    if(!piece){
+
+        return [];
+
+    }
+
+
+    const color =
+        colorOf(piece);
+
+
+    const pseudo =
+        getPseudoMoves(
+            board,
+            r,
+            c
+        );
+
+
+    const legal = [];
+
+
+    for(const move of pseudo){
+
+        /*
+         * ห้ามกินขุนโดยตรง
+         */
+
+        if(
+            board[
+                move.r
+            ][
+                move.c
+            ]
+            &&
+            typeOf(
+                board[
+                    move.r
+                ][
+                    move.c
+                ]
+            ) === "K"
+        ){
+
+            continue;
+
+        }
+
+
+        const copy =
+            cloneBoard(board);
+
+
+        copy[
+            move.r
+        ][
+            move.c
+        ] =
+            copy[r][c];
+
+
+        copy[r][c] =
+            null;
+
+
+        /*
+         * promotion จำลอง
+         */
+
+        if(
+            copy[
+                move.r
+            ][
+                move.c
+            ] === "w-P"
+            &&
+            move.r === 2
+        ){
+
+            copy[
+                move.r
+            ][
+                move.c
+            ] = "w-M";
+
+        }
+
+
+        if(
+            copy[
+                move.r
+            ][
+                move.c
+            ] === "b-P"
+            &&
+            move.r === 5
+        ){
+
+            copy[
+                move.r
+            ][
+                move.c
+            ] = "b-M";
+
+        }
+
+
+        /*
+         * ห้ามทำให้ขุนตัวเองโดนรุก
+         */
+
+        if(
+            !isInCheck(
+                copy,
+                color
+            )
+        ){
+
+            legal.push(move);
+
+        }
+
+    }
+
+
+    return legal;
+
+}
+
+
+/* =========================================================
+   PSEUDO MOVES
+========================================================= */
+
+function getPseudoMoves(
+    board,
+    r,
+    c
+){
+
+    const piece =
+        board[r][c];
+
+
+    if(!piece){
+
+        return [];
+
+    }
+
+
+    const color =
+        colorOf(piece);
+
+    const type =
+        typeOf(piece);
+
+
+    const moves = [];
+
+
+    /*
+     * helper
+     */
+
+    function add(nr,nc){
+
+        if(
+            nr < 0 ||
+            nr >= 8 ||
+            nc < 0 ||
+            nc >= 8
+        ){
+
+            return;
+
+        }
+
+
+        const target =
+            board[nr][nc];
+
+
+        if(
+            !target ||
+            colorOf(target) !== color
+        ){
+
+            moves.push({
+                r:nr,
+                c:nc
+            });
+
+        }
+
+    }
+
+
+    /*
+     * PAWN
+     */
+
+    if(type === "P"){
+
+        const dir =
+            color === "w"
+                ? -1
+                : 1;
+
+
+        /*
+         * เดินหน้า
+         */
+
+        const fr =
+            r + dir;
+
+
+        if(
+            fr >= 0 &&
+            fr < 8 &&
+            !board[fr][c]
+        ){
+
+            moves.push({
+                r:fr,
+                c:c
+            });
+
+        }
+
+
+        /*
+         * กินเฉียง
+         */
+
+        for(
+            const dc of [-1,1]
+        ){
+
+            const nr =
+                r + dir;
+
+            const nc =
+                c + dc;
+
+
+            if(
+                nr >= 0 &&
+                nr < 8 &&
+                nc >= 0 &&
+                nc < 8
+            ){
+
+                const target =
+                    board[nr][nc];
+
+
+                if(
+                    target &&
+                    colorOf(target)
+                    !== color
+                ){
+
+                    /*
+                     * ห้ามกินขุนตรง ๆ
+                     */
+
+                    if(
+                        typeOf(target)
+                        !== "K"
+                    ){
+
+                        moves.push({
+                            r:nr,
+                            c:nc
+                        });
+
+                    }
+
+                }
+
+            }
+
+        }
+
+
+        return moves;
+
+    }
+
+
+    /*
+     * PROMOTED PAWN / MET
+     */
+
+    if(type === "M"){
+
+        add(r-1,c-1);
+        add(r-1,c+1);
+        add(r+1,c-1);
+        add(r+1,c+1);
+
+        return moves;
+
+    }
+
+
+    /*
+     * KING
+     */
+
+    if(type === "K"){
+
+        for(
+            let dr=-1;
+            dr<=1;
+            dr++
+        ){
+
+            for(
+                let dc=-1;
+                dc<=1;
+                dc++
+            ){
+
+                if(
+                    dr === 0 &&
+                    dc === 0
+                ){
+
+                    continue;
+
+                }
+
+                add(
+                    r+dr,
+                    c+dc
+                );
+
+            }
+
+        }
+
+        return moves;
+
+    }
+
+
+    /*
+     * KHON
+     *
+     * 4 diagonal
+     * + 1 forward
+     */
+
+    if(type === "C"){
+
+        add(r-1,c-1);
+        add(r-1,c+1);
+        add(r+1,c-1);
+        add(r+1,c+1);
+
+
+        const dir =
+            color === "w"
+                ? -1
+                : 1;
+
+
+        add(
+            r+dir,
+            c
+        );
+
+
+        return moves;
+
+    }
+
+
+    /*
+     * KNIGHT
+     */
+
+    if(type === "N"){
+
+        const jumps = [
+
+            [-2,-1],
+            [-2, 1],
+            [-1,-2],
+            [-1, 2],
+            [ 1,-2],
+            [ 1, 2],
+            [ 2,-1],
+            [ 2, 1]
+
+        ];
+
+
+        for(
+            const [dr,dc]
+            of jumps
+        ){
+
+            add(
+                r+dr,
+                c+dc
+            );
+
+        }
+
+
+        return moves;
+
+    }
+
+
+    /*
+     * ROOK
+     */
+
+    if(type === "R"){
+
+        const dirs = [
+
+            [-1,0],
+            [1,0],
+            [0,-1],
+            [0,1]
+
+        ];
+
+
+        for(
+            const [dr,dc]
+            of dirs
+        ){
+
+            let nr =
+                r + dr;
+
+            let nc =
+                c + dc;
+
+
+            while(
+                nr >= 0 &&
+                nr < 8 &&
+                nc >= 0 &&
+                nc < 8
+            ){
+
+                const target =
+                    board[nr][nc];
+
+
+                if(!target){
+
+                    moves.push({
+                        r:nr,
+                        c:nc
+                    });
+
+                }else{
+
+                    if(
+                        colorOf(target)
+                        !== color
+                        &&
+                        typeOf(target)
+                        !== "K"
+                    ){
+
+                        moves.push({
+                            r:nr,
+                            c:nc
+                        });
+
+                    }
+
+                    break;
+
+                }
+
+
+                nr += dr;
+
+                nc += dc;
+
+            }
+
+        }
+
+
+        return moves;
+
+    }
+
+
+    return moves;
+
+}
+
+
+/* =========================================================
+   ATTACKED SQUARE
+========================================================= */
+
+function isSquareAttacked(
+    board,
+    r,
+    c,
+    byColor
+){
+
+    /*
+     * Pawn attacks
+     */
+
+    const pawnRow =
+        byColor === "w"
+            ? r + 1
+            : r - 1;
+
+
+    for(
+        const dc of [-1,1]
+    ){
+
+        const pc =
+            c + dc;
+
+
+        if(
+            pawnRow >= 0 &&
+            pawnRow < 8 &&
+            pc >= 0 &&
+            pc < 8
+        ){
+
+            const p =
+                board[
+                    pawnRow
+                ][
+                    pc
+                ];
+
+
+            if(
+                p &&
+                colorOf(p) === byColor &&
+                typeOf(p) === "P"
+            ){
+
+                return true;
+
+            }
+
+        }
+
+    }
+
+
+    /*
+     * ตรวจตัวหมากทุกตัว
+     */
+
+    for(
+        let pr=0;
+        pr<8;
+        pr++
+    ){
+
+        for(
+            let pc=0;
+            pc<8;
+            pc++
+        ){
+
+            const piece =
+                board[pr][pc];
+
+
+            if(
+                !piece ||
+                colorOf(piece)
+                !== byColor
+            ){
+
+                continue;
+
+            }
+
+
+            const type =
+                typeOf(piece);
+
+
+            /*
+             * Pawn จัดการไปแล้ว
+             */
+
+            if(type === "P"){
+
+                continue;
+
+            }
+
+
+            const moves =
+                getPseudoMoves(
+                    board,
+                    pr,
+                    pc
+                );
+
+
+            if(
+                moves.some(
+                    m =>
+                        m.r === r &&
+                        m.c === c
+                )
+            ){
+
+                return true;
+
+            }
+
+        }
+
+    }
+
+
+    return false;
+
+}
+
+
+/* =========================================================
+   FIND KING
+========================================================= */
+
+function findKing(
+    board,
+    color
+){
+
+    for(
+        let r=0;
+        r<8;
+        r++
+    ){
+
+        for(
+            let c=0;
+            c<8;
+            c++
+        ){
+
+            if(
+                board[r][c]
+                === color + "-K"
+            ){
+
+                return {
+                    r:r,
+                    c:c
+                };
+
+            }
+
+        }
+
+    }
+
+
+    return null;
+
+}
+
+
+/* =========================================================
+   CHECK
+========================================================= */
+
+function isInCheck(
+    board,
+    color
+){
+
+    const king =
+        findKing(
+            board,
+            color
+        );
+
+
+    if(!king){
+
+        return true;
+
+    }
+
+
+    const enemy =
+        color === "w"
+            ? "b"
+            : "w";
+
+
+    return isSquareAttacked(
+        board,
+        king.r,
+        king.c,
+        enemy
+    );
+
+}
+
+
+/* =========================================================
+   ALL LEGAL MOVES
+========================================================= */
+
+function getAllLegalMoves(
+    board,
+    color
+){
+
+    const result = [];
+
+
+    for(
+        let r=0;
+        r<8;
+        r++
+    ){
+
+        for(
+            let c=0;
+            c<8;
+            c++
+        ){
+
+            const piece =
+                board[r][c];
+
+
+            if(
+                !piece ||
+                colorOf(piece)
+                !== color
+            ){
+
+                continue;
+
+            }
+
+
+            const moves =
+                getLegalMoves(
+                    board,
+                    r,
+                    c
+                );
+
+
+            for(
+                const move
+                of moves
+            ){
+
+                result.push({
+
+                    from:{
+                        r:r,
+                        c:c
+                    },
+
+                    to:{
+                        r:move.r,
+                        c:move.c
+                    }
+
+                });
+
+            }
+
+        }
+
+    }
+
+
+    return result;
+
+}
+
+
+/* =========================================================
+   GAME END
+========================================================= */
+
+function checkGameEnd(){
+
+    const legal =
+        getAllLegalMoves(
+            boardState,
+            turn
+        );
+
+
+    if(legal.length > 0){
+
+        return false;
+
+    }
+
+
+    gameOver = true;
+
+
+    if(
+        isInCheck(
+            boardState,
+            turn
+        )
+    ){
+
+        const winner =
+            turn === "w"
+                ? "ดำ"
+                : "ขาว";
+
+
+        setStatus(
+            "รุกฆาต • ฝ่าย" +
+            winner +
+            "ชนะ",
+            false
+        );
+
+    }else{
+
+        setStatus(
+            "ขุนอับ • เสมอ",
+            false
+        );
+
+    }
+
+
+    return true;
+
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+function setStatus(
+    text,
+    thinking
+){
+
+    const textEl =
+        document.getElementById(
+            "statusText"
+        );
+
+
+    const dot =
+        document.querySelector(
+            ".status-dot"
+        );
+
+
+    textEl.innerText =
+        text;
+
+
+    dot.style.background =
+        thinking
+            ? "#d69a36"
+            : "#48a85a";
+
+}
+
+
+/* =========================================================
+   RESET
+========================================================= */
+
+function resetGame(){
+
+    boardState =
+        cloneBoard(
+            initialBoard
+        );
+
+
+    turn = "w";
+
+    selected = null;
+
+    legalTargets = [];
+
+    gameOver = false;
+
+    aiThinking = false;
+
+
+    setStatus(
+        "ตาของคุณ • ฝ่ายขาว",
+        false
+    );
+
+
+    render();
+
+}
+
+
+/* =========================================================
+   START
+========================================================= */
+
+render();
+
+</script>
+
+</body>
+</html>
